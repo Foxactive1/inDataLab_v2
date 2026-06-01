@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>InDataLab | Laboratório de Dados Inteligente</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/style.css">
+    <!-- ⭐ CSS de Extensões de Tema (IMPORTANTE: depois do style.css) -->
+    <link rel="stylesheet" href="static/css/theme-extensions.css">
+</head>
+<body>
+
+<div id="app">
+    <!-- Sidebar esquerda -->
+    <aside id="notebooksSidebar">
+        <div class="sidebar-header">
+            <div class="logo"><i class="bi bi-lightning-fill"></i> InDataLab</div>
+            <button class="btn-close-sidebar d-lg-none" id="closeSidebarBtnMobile"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="sidebar-toolbar">
+            <h6><i class="bi bi-journal-bookmark-fill"></i> Notebooks</h6>
+            <button class="btn-new-notebook" onclick="app.notebook.openNewModal()"><i class="bi bi-plus-lg"></i></button>
+        </div>
+        <div id="notebooksListContainer" class="notebooks-scroll"><div id="notebooksList"></div></div>
+        <div class="sidebar-footer"><nav id="notebookPagination"></nav></div>
+    </aside>
+
+    <!-- Área principal -->
+    <main id="mainWorkspace">
+        <div class="top-bar">
+            <div class="notebook-info">
+                <button id="toggleSidebarBtn" class="btn-toggle-sidebar d-none d-lg-block"><i class="bi bi-layout-sidebar"></i></button>
+                <button id="openSidebarMobileBtn" class="btn-toggle-sidebar d-lg-none"><i class="bi bi-list"></i></button>
+                <div>
+                    <h3 id="selectedNotebookTitle">Selecione um notebook</h3>
+                    <p id="selectedNotebookDesc">—</p>
+                </div>
+            </div>
+            <div class="top-actions">
+                <button id="themeToggleBtn" class="btn-action" type="button" title="Alternar tema">
+                    <i class="bi bi-sun-fill"></i>
+                    <span class="theme-label">Claro</span>
+                </button>
+                <button class="btn-action" id="refreshCellsBtn" disabled><i class="bi bi-arrow-repeat"></i> Atualizar</button>
+                <button class="btn-action primary" id="addCellBtn" disabled><i class="bi bi-plus-circle"></i> Célula</button>
+                <button class="btn-action" data-bs-toggle="modal" data-bs-target="#datasetUploadModal"><i class="bi bi-upload"></i> Dataset</button>
+            </div>
+        </div>
+
+        <div id="cellsContainer"></div>
+
+        <div id="datasetsFooterContainer">
+            <h6><i class="bi bi-database"></i> Datasets anexados</h6>
+            <div id="datasetsList"><div class="text-muted small">Nenhum dataset carregado.</div></div>
+        </div>
+    </main>
+
+    <!-- Painel direito (chat) -->
+    <aside id="rightPanel">
+        <div class="chat-header"><h6><i class="bi bi-robot"></i> Copilot</h6></div>
+        <div id="copilotMessages" class="chat-messages"><div class="msg-assistant">Olá! Posso ajudar com código, explicar células ou sugerir análises.</div></div>
+        <div class="chat-input-area">
+            <div class="input-group">
+                <input type="text" id="copilotInput" placeholder="Pergunte...">
+                <button id="copilotSendBtn"><i class="bi bi-send-fill"></i></button>
+            </div>
+            <button id="copilotClearBtn" class="btn-link-clear">Limpar histórico</button>
+        </div>
+    </aside>
+</div>
+
+<!-- Botão flutuante (mobile) -->
+<button id="fabChatBtn"><i class="bi bi-chat-dots-fill"></i></button>
+
+<!-- ========== MODAIS ========== -->
+
+<!-- Modal Notebook -->
+<div class="modal fade" id="notebookModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Novo Notebook</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="notebookId">
+                <div class="mb-3"><label class="form-label">Título *</label><input type="text" id="notebookTitle" class="form-control"></div>
+                <div class="mb-3"><label class="form-label">Descrição</label><textarea id="notebookDesc" class="form-control" rows="2"></textarea></div>
+                <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="notebookPublic"><label class="form-check-label">Público</label></div>
+                <div class="mb-3"><label class="form-label">Kernel</label><select id="notebookKernel" class="form-select"><option value="python3">Python 3</option></select></div>
+                <div class="mb-3"><label class="form-label">Banco SQL padrão (opcional)</label><input type="text" id="notebookSqlConnection" class="form-control" placeholder="ex: instance/meubanco.db"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="app.notebook.save()">Salvar</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Célula -->
+<div class="modal fade" id="cellModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Célula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="cellId">
+                <div class="mb-3"><label class="form-label">Tipo</label><select id="cellType" class="form-select"><option value="python">Python</option><option value="sql">SQL</option><option value="markdown">Markdown</option><option value="ai">IA (Groq)</option></select></div>
+                <div class="mb-3" id="sqlConnectionDiv" style="display:none;"><label class="form-label">Caminho do banco SQL</label><input type="text" id="cellSqlConnection" class="form-control"></div>
+                <div class="mb-3"><label class="form-label">Conteúdo</label><textarea id="cellContent" class="form-control font-monospace" rows="8"></textarea></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="app.cell.save()">Salvar</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Execução (Resultado) -->
+<div class="modal fade" id="executionModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Resultado</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><div id="execLogs" class="bg-dark text-white p-3" style="max-height: 500px; overflow: auto; font-family: monospace;"></div></div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button><button class="btn btn-success" id="runCellBtn">▶ Executar novamente</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Upload Dataset -->
+<div class="modal fade" id="datasetUploadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Importar Dataset</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><input type="file" id="datasetFile" class="form-control" accept=".csv,.txt,.xlsx,.json,.db"><div class="form-text mt-2">CSV, Excel, JSON ou SQLite (.db)</div></div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="app.dataset.upload()">Enviar</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Preview Dataset (CORREÇÃO: adicionado para visualizar dados) -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Prévia do Dataset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewModalBody" style="overflow-x: auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chat Mobile -->
+<div class="modal fade" id="chatMobileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="bi bi-robot"></i> Assistente</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body p-0"><div id="copilotMessagesMobile" class="chat-messages" style="height: 55vh;"><div class="msg-assistant">Olá! Posso ajudar.</div></div></div>
+            <div class="modal-footer bg-light">
+                <div class="input-group w-100"><input type="text" id="copilotInputMobile" class="form-control rounded-pill"><button class="btn btn-primary rounded-pill ms-2" id="copilotSendMobileBtn"><i class="bi bi-send-fill"></i></button></div>
+                <button id="copilotClearMobileBtn" class="btn btn-sm btn-link text-muted mt-2 w-100">Limpar histórico</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+
+<script defer
+src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+<script defer
+src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+marked.setOptions({
+    gfm: true,
+    breaks: true
+});
+</script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+<script>
+mermaid.initialize({
+    startOnLoad: false
+});
+</script>
+
+<!-- ⭐ Script do Gerenciador de Tema (REFORMULADO) -->
+<script src="static/js/theme-manager.js"></script>
+
+<script src="static/js/utils.js"></script>
+<script src="static/js/api.js"></script>
+<script src="static/js/components/notebook.js"></script>
+<script src="static/js/components/cell.js"></script>
+<script src="static/js/components/chat.js"></script>
+<script src="static/js/components/dataset.js"></script>
+<script src="static/js/app.js"></script>
+
+<!-- ⭐ Conectar botão de tema ao gerenciador -->
+<script>
+    // Aguardar que o ThemeManager seja inicializado
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn && window.themeManager) {
+            btn.addEventListener('click', () => {
+                window.themeManager.toggleTheme();
+            });
+        }
+    });
+
+    // Atualizar botão quando tema muda
+    window.addEventListener('themeChanged', (e) => {
+        if (window.themeManager) {
+            window.themeManager.updateButton();
+        }
+    });
+</script>
+</body>
+</html>

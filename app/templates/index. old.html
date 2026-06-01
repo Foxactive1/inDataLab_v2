@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="InDataLab - Plataforma colaborativa de notebooks para análise de dados">
+    <title>InDataLab - Plataforma de Notebooks</title>
+    
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Marked Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+    <style>
+        :root {
+            --primary: #0f63d8;
+            --primary-dark: #0a47a0;
+            --primary-light: #e8f0ff;
+            --success: #10a981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg-light: #f8fafc;
+            --bg-lighter: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-light: #e2e8f0;
+            --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Sora', sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #ffffff 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+        .plotly-graph, .js-plotly-plot, .plotly {
+    height: 500px !important;
+    width: 100% !important;
+}
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            position: sticky;
+            top: 20px;
+        }
+        .sidebar .card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: 0;
+            padding: 1rem;
+        }
+        .list-group-item {
+            border: 0;
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .list-group-item:hover {
+            background: var(--primary-light);
+            transform: translateX(4px);
+        }
+        .list-group-item.active {
+            background: var(--primary-light);
+            border-left: 3px solid var(--primary);
+            font-weight: 600;
+        }
+        .main-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        .main-card .card-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-bottom: 1px solid var(--border-light);
+            padding: 1.5rem;
+        }
+        .cell-card {
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            transition: all 0.2s;
+            background: white;
+        }
+        .cell-card.python { border-left: 4px solid var(--primary); }
+        .cell-card.sql { border-left: 4px solid var(--info); }
+        .cell-card.markdown { border-left: 4px solid var(--success); }
+        .cell-card.ai { border-left: 4px solid var(--warning); }
+        
+        .cell-header {
+            background: var(--bg-lighter);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .cell-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .cell-type-badge.python { background: var(--primary-light); color: var(--primary); }
+        .cell-type-badge.sql { background: rgba(59, 130, 246, 0.1); color: var(--info); }
+        .cell-type-badge.markdown { background: rgba(16, 169, 129, 0.1); color: var(--success); }
+        .cell-type-badge.ai { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        
+        .cell-code {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .cell-markdown, .cell-output-text {
+            background: white;
+            padding: 1rem;
+        }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background: var(--bg-lighter);
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .btn-icon:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .copilot-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: 0;
+            box-shadow: var(--shadow-lg);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1050;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .copilot-button:hover { transform: scale(1.1); }
+        .copilot-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 380px;
+            max-width: calc(100% - 60px);
+            height: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            z-index: 1050;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+        .copilot-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .copilot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: var(--bg-lighter);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .copilot-message {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            max-width: 85%;
+        }
+        .user-message {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+        }
+        .assistant-message {
+            background: white;
+            align-self: flex-start;
+            border: 1px solid var(--border-light);
+        }
+        .copilot-input-area {
+            display: flex;
+            padding: 1rem;
+            background: white;
+            border-top: 1px solid var(--border-light);
+            gap: 0.75rem;
+        }
+        .copilot-input {
+            flex: 1;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 0.75rem 1rem;
+        }
+        .copilot-send {
+            background: var(--primary);
+            border: 0;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .exec-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .hidden { display: none !important; }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-light: #0f172a;
+                --bg-lighter: #1e293b;
+                --text-primary: #f1f5f9;
+                --border-light: #334155;
+            }
+            body, .sidebar, .main-card, .cell-markdown, .cell-output-text, .copilot-panel, .cell-card { background: #1e293b; }
+            .cell-markdown, .cell-output-text { color: var(--text-primary); }
+            .main-card .card-header { background: #0f172a; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar-custom mb-4" role="navigation" aria-label="Navegação principal">
+    <div class="container-fluid">
+        <div class="navbar-brand"><i class="bi bi-laptop"></i> InDataLab</div>
+    </div>
+</nav>
+
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-md-4 col-lg-3">
+            <aside class="sidebar" role="navigation" aria-label="Menu lateral de Notebooks">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-journal-bookmark-fill"></i> Meus Notebooks</h5>
+                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#notebookModal" onclick="clearNotebookForm()" aria-label="Criar novo notebook">
+                        <i class="bi bi-plus-lg"></i> Novo
+                    </button>
+                </div>
+                <div class="list-group list-group-flush" id="notebooksList" role="listbox">Carregando...</div>
+                <div class="card-footer">
+                    <nav aria-label="Paginação de notebooks">
+                        <ul class="pagination pagination-sm justify-content-center" id="notebookPagination"></ul>
+                    </nav>
+                </div>
+                
+            </aside>
+        </div>
+        
+        <!-- MAIN CONTENT -->
+        <div class="col-md-8 col-lg-9">
+            <main class="main-card" role="main">
+                <div>
+    <h4 id="selectedNotebookTitle">Selecione um notebook</h4>
+    <small id="selectedNotebookDesc" class="text-muted"></small>
+</div>
+                    <div>
+                        <h4 id="selectedNotebookTitle">Selecione um notebook</h4>
+                        <small id="selectedNotebookDesc" class="text-muted"></small>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary btn-sm" id="refreshCellsBtn" onclick="loadCells()" disabled><i class="bi bi-arrow-repeat"></i> Atualizar</button>
+                        <button class="btn btn-outline-success btn-sm" id="addCellBtn" disabled onclick="openNewCellModal()"><i class="bi bi-plus-circle"></i> Nova célula</button>
+                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#datasetUploadModal"><i class="bi bi-upload"></i> Dataset</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="cellsContainer"></div>
+                    <div id="datasetsIntegrationContainer" class="mt-4"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAIS ===================== -->
+<!-- Notebook Modal -->
+<div class="modal fade" id="notebookModal" tabindex="-1" aria-labelledby="notebookModalTitle" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notebookModalTitle">Novo Notebook</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="notebookId">
+                <div class="mb-3">
+                    <label for="notebookTitle" class="form-label">Título *</label>
+                    <input type="text" id="notebookTitle" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="notebookDesc" class="form-label">Descrição</label>
+                    <textarea id="notebookDesc" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="notebookPublic">
+                    <label class="form-check-label" for="notebookPublic">Público</label>
+                </div>
+                <div class="mb-3">
+                    <label for="notebookKernel" class="form-label">Kernel</label>
+                    <select id="notebookKernel" class="form-select">
+                        <option value="python3">Python 3</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="notebookSqlConnection" class="form-label">Caminho do banco SQL padrão (opcional)</label>
+                    <input type="text" id="notebookSqlConnection" class="form-control" placeholder="Ex: instance/meubanco.db">
+                    <small class="text-muted">Usado por células SQL sem conexão própria</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveNotebook()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cell Modal -->
+<div class="modal fade" id="cellModal" tabindex="-1" aria-labelledby="cellModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cellModalTitle">Célula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="cellId">
+                <div class="mb-3">
+                    <label for="cellType" class="form-label">Tipo</label>
+                    <select id="cellType" class="form-select">
+                        <option value="python">Python</option>
+                        <option value="sql">SQL</option>
+                        <option value="markdown">Markdown</option>
+                        <option value="ai">IA (Groq)</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="sqlConnectionDiv" style="display:none;">
+                    <label class="form-label" for="cellSqlConnection">Caminho do banco SQL (opcional)</label>
+                    <input type="text" id="cellSqlConnection" class="form-control" placeholder="Deixe em branco para usar o padrão do notebook">
+                </div>
+                <div class="mb-3">
+                    <label for="cellContent" class="form-label">Conteúdo</label>
+                    <textarea id="cellContent" class="form-control" rows="6" style="font-family: monospace;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveCell()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dataset Upload Modal -->
+<div class="modal fade" id="datasetUploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar Dataset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="file" id="datasetFile" class="form-control" accept=".csv,.txt,.xlsx,.json,.db" required>
+                <div class="form-text">Formatos: CSV, TXT, XLSX, JSON, SQLite (.db)</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" onclick="uploadDataset()">Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Execution Modal -->
+<div class="modal fade" id="executionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Executar Célula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Resultado</h6>
+                <div id="execLogs" class="exec-log">Clique em "Executar" para rodar a célula.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button class="btn btn-success" id="runCellBtn">▶ Executar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- COPILOT SYSTEM -->
+<button class="copilot-button" id="copilotToggleBtn" aria-label="Abrir assistente Copilot"><i class="bi bi-chat-dots-fill"></i></button>
+<div class="copilot-panel hidden" id="copilotPanel" role="complementary" aria-label="Painel do assistente Copilot">
+    <div class="copilot-header">
+        <div><i class="bi bi-robot"></i> Assistente AI</div>
+        <div>
+            <button id="copilotClearBtn" class="btn btn-sm btn-link text-white" aria-label="Limpar histórico"><i class="bi bi-trash3"></i></button>
+            <button id="copilotCloseBtn" class="btn-close btn-close-white" aria-label="Fechar"></button>
+        </div>
+    </div>
+    <div id="copilotMessages" class="copilot-messages" role="log"><div class="copilot-message assistant-message">Olá! Posso ajudar com código, explicar células ou sugerir melhorias.</div></div>
+    <div class="copilot-input-area">
+        <input type="text" id="copilotInput" class="copilot-input" placeholder="Pergunte algo..." aria-label="Mensagem para o Copilot">
+        <button id="copilotSendBtn" class="copilot-send" aria-label="Enviar"><i class="bi bi-send-fill"></i></button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ==========================================================
+// CONFIGURAÇÕES GLOBAIS E ESTADO
+// ==========================================================
+const API_BASE = '/api';
+let currentNotebookId = null;
+let currentPage = 1;
+let totalNotebooks = 0;
+let currentExecutingCellId = null;
+
+// ==========================================================
+// NOTEBOOKS: CRUD e listagem (CORRIGIDO)
+// ==========================================================
+async function loadNotebooks(page = 1) {
+    currentPage = page;
+    try {
+        const response = await fetch(`${API_BASE}/notebooks?page=${page}&per_page=10`);
+        const result = await response.json();
+        if (result.success) {
+            const notebooks = result.data.notebooks;       // array dentro de data
+            const pagination = result.data.pagination;
+            totalNotebooks = pagination.total;
+            renderNotebooksList(notebooks);
+            renderPagination(pagination);
+        } else {
+            document.getElementById('notebooksList').innerHTML = '<div class="p-3 text-danger">Erro ao carregar notebooks.</div>';
+        }
+    } catch (err) {
+        console.error(err);
+        document.getElementById('notebooksList').innerHTML = '<div class="p-3 text-danger">Falha na conexão.</div>';
+    }
+}
+
+function renderNotebooksList(notebooks) {
+    const container = document.getElementById('notebooksList');
+    if (!notebooks || notebooks.length === 0) {
+        container.innerHTML = '<div class="p-3 text-muted">Nenhum notebook criado.</div>';
+        return;
+    }
+    container.innerHTML = notebooks.map(nb => `
+        <div class="list-group-item ${currentNotebookId === nb.id ? 'active' : ''}" onclick="selectNotebook(${nb.id})">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${escapeHtml(nb.title)}</strong>
+                    <br><small class="text-muted">${escapeHtml(nb.description || 'Sem descrição')}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="event.stopPropagation(); editNotebook(${nb.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotebook(${nb.id})"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderPagination(pagination) {
+    const { page, pages } = pagination;
+    const paginationEl = document.getElementById('notebookPagination');
+    if (pages <= 1) {
+        paginationEl.innerHTML = '';
+        return;
+    }
+    let html = '';
+    for (let i = 1; i <= pages; i++) {
+        html += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="loadNotebooks(${i}); return false;">${i}</a></li>`;
+    }
+    paginationEl.innerHTML = html;
+}
+
+function clearNotebookForm() {
+    document.getElementById('notebookId').value = '';
+    document.getElementById('notebookTitle').value = '';
+    document.getElementById('notebookDesc').value = '';
+    document.getElementById('notebookPublic').checked = false;
+    document.getElementById('notebookKernel').value = 'python3';
+    document.getElementById('notebookSqlConnection').value = '';
+    document.getElementById('notebookModalTitle').innerText = 'Novo Notebook';
+}
+
+async function saveNotebook() {
+    const id = document.getElementById('notebookId').value;
+    const payload = {
+        title: document.getElementById('notebookTitle').value,
+        description: document.getElementById('notebookDesc').value,
+        is_public: document.getElementById('notebookPublic').checked,
+        kernel_type: document.getElementById('notebookKernel').value,
+        default_sql_connection: document.getElementById('notebookSqlConnection').value
+    };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${API_BASE}/notebooks/${id}` : `${API_BASE}/notebooks`;
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('notebookModal')).hide();
+            await loadNotebooks(currentPage);
+            if (id && currentNotebookId == id) {
+                selectNotebook(id);
+            }
+            showToast('Sucesso', id ? 'Notebook atualizado.' : 'Notebook criado.', 'success');
+        } else {
+            alert('Erro: ' + (data.error || data.message));
+        }
+    } catch (err) {
+        alert('Falha ao salvar notebook: ' + err.message);
+    }
+}
+
+async function editNotebook(id) {
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${id}`);
+        const data = await response.json();
+        if (data.success) {
+            const nb = data.data.notebook;  // a estrutura retorna { notebook: {...}, stats: {...} }
+            document.getElementById('notebookId').value = nb.id;
+            document.getElementById('notebookTitle').value = nb.title;
+            document.getElementById('notebookDesc').value = nb.description || '';
+            document.getElementById('notebookPublic').checked = nb.is_public;
+            document.getElementById('notebookKernel').value = nb.kernel_type || 'python3';
+            document.getElementById('notebookSqlConnection').value = nb.default_sql_connection || '';
+            document.getElementById('notebookModalTitle').innerText = 'Editar Notebook';
+            new bootstrap.Modal(document.getElementById('notebookModal')).show();
+        }
+    } catch (err) {
+        alert('Erro ao carregar dados do notebook');
+    }
+}
+
+async function deleteNotebook(id) {
+    if (!confirm('Excluir notebook permanentemente?')) return;
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+        if (data.success) {
+            if (currentNotebookId === id) {
+                currentNotebookId = null;
+                document.getElementById('selectedNotebookTitle').innerText = 'Selecione um notebook';
+                document.getElementById('selectedNotebookDesc').innerText = '';
+                document.getElementById('cellsContainer').innerHTML = '';
+                document.getElementById('datasetsIntegrationContainer').innerHTML = '';
+                document.getElementById('refreshCellsBtn').disabled = true;
+                document.getElementById('addCellBtn').disabled = true;
+            }
+            await loadNotebooks(currentPage);
+            showToast('Sucesso', 'Notebook removido.', 'info');
+        } else {
+            alert('Erro: ' + (data.error || data.message));
+        }
+    } catch (err) {
+        alert('Falha ao deletar: ' + err.message);
+    }
+}
+
+async function selectNotebook(id) {
+    currentNotebookId = id;
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${id}`);
+        const data = await response.json();
+        if (data.success) {
+            const nb = data.data.notebook;
+            document.getElementById('selectedNotebookTitle').innerText = nb.title;
+            document.getElementById('selectedNotebookDesc').innerText = nb.description || '';
+            document.getElementById('refreshCellsBtn').disabled = false;
+            document.getElementById('addCellBtn').disabled = false;
+            await loadCells();
+            await loadDatasets();
+        }
+    } catch (err) {
+        console.error(err);
+    }
+    // Re-renderiza a sidebar para destacar o notebook ativo
+    await loadNotebooks(currentPage);
+}
+
+// ==========================================================
+// CÉLULAS: CRUD, execução e renderização
+// ==========================================================
+async function loadCells() {
+    if (!currentNotebookId) return;
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/cells`);
+        const data = await response.json();
+        if (data.success) {
+            // CORREÇÃO: backend retorna { cells: [...] } dentro de data.data
+            const cellsArray = data.data.cells || [];
+            renderCells(cellsArray);
+        } else {
+            document.getElementById('cellsContainer').innerHTML = '<div class="alert alert-warning">Erro ao carregar células.</div>';
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderCells(cells) {
+    const container = document.getElementById('cellsContainer');
+    if (!cells.length) {
+        container.innerHTML = '<p class="text-muted">Nenhuma célula ainda. Clique em "Nova célula".</p>';
+        return;
+    }
+    container.innerHTML = cells.map(cell => `
+        <div class="cell-card ${cell.cell_type}" data-cell-id="${cell.id}">
+            <div class="cell-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="cell-type-badge ${cell.cell_type}">
+                        <i class="bi ${getCellIcon(cell.cell_type)}"></i> ${cell.cell_type.toUpperCase()}
+                    </span>
+                    <small class="text-muted">#${cell.order || cell.position}</small>
+                </div>
+                <div>
+                    <button class="btn-icon me-1" onclick="editCell(${cell.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+                    <button class="btn-icon me-1" onclick="executeCell(${cell.id})" title="Executar"><i class="bi bi-play-fill"></i></button>
+                    <button class="btn-icon" onclick="deleteCell(${cell.id})" title="Excluir"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+            <div class="cell-content">
+                ${cell.cell_type === 'markdown' 
+                    ? `<div class="cell-markdown" id="md-${cell.id}">${marked.parse(cell.content || '')}</div>` 
+                    : `<pre class="cell-code"><code>${escapeHtml(cell.content || '')}</code></pre>`
+                }
+                ${cell.output ? `
+                    <div class="cell-output-text border-top mt-2">
+                        <strong>Saída anterior:</strong>
+                        <div class="mt-1">
+                            ${cell.output_type === 'image' 
+                                ? `<img src="${escapeHtml(cell.output)}" style="max-width:100%; border-radius:8px;">`
+                                : cell.output_type === 'html'
+                                    ? `<div class="plotly-graph">${cell.output}</div>`
+                                    : `<pre class="mb-0 small">${escapeHtml(cell.output)}</pre>`
+                            }
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+    cells.forEach(cell => {
+        if (cell.cell_type === 'markdown') {
+            const el = document.getElementById(`md-${cell.id}`);
+            if (el) el.innerHTML = marked.parse(cell.content || '');
+        }
+    });
+}
+function getCellIcon(type) {
+    switch(type) {
+        case 'python': return 'bi-file-code';
+        case 'sql': return 'bi-database';
+        case 'markdown': return 'bi-markdown';
+        case 'ai': return 'bi-robot';
+        default: return 'bi-file-text';
+    }
+}
+
+function openNewCellModal() {
+    document.getElementById('cellId').value = '';
+    document.getElementById('cellType').value = 'python';
+    document.getElementById('cellContent').value = '';
+    document.getElementById('cellSqlConnection').value = '';
+    document.getElementById('sqlConnectionDiv').style.display = 'none';
+    document.getElementById('cellModalTitle').innerText = 'Nova Célula';
+    new bootstrap.Modal(document.getElementById('cellModal')).show();
+}
+
+async function editCell(id) {
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/cells/${id}`);
+        const data = await response.json();
+        if (data.success) {
+            const cell = data.data;
+            document.getElementById('cellId').value = cell.id;
+            document.getElementById('cellType').value = cell.cell_type;
+            document.getElementById('cellContent').value = cell.content || '';
+            document.getElementById('cellSqlConnection').value = cell.sql_connection || '';
+            document.getElementById('sqlConnectionDiv').style.display = cell.cell_type === 'sql' ? 'block' : 'none';
+            document.getElementById('cellModalTitle').innerText = 'Editar Célula';
+            new bootstrap.Modal(document.getElementById('cellModal')).show();
+        }
+    } catch (err) {
+        alert('Erro ao carregar célula');
+    }
+}
+
+async function saveCell() {
+    const id = document.getElementById('cellId').value;
+    const payload = {
+        cell_type: document.getElementById('cellType').value,
+        content: document.getElementById('cellContent').value,
+        sql_connection: document.getElementById('cellSqlConnection').value || null
+    };
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${API_BASE}/notebooks/${currentNotebookId}/cells/${id}` : `${API_BASE}/notebooks/${currentNotebookId}/cells`;
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('cellModal')).hide();
+            await loadCells();
+            showToast('Sucesso', id ? 'Célula atualizada.' : 'Célula criada.', 'success');
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    } catch (err) {
+        alert('Falha ao salvar célula: ' + err.message);
+    }
+}
+
+async function deleteCell(id) {
+    if (!confirm('Excluir esta célula?')) return;
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/cells/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+        if (data.success) {
+            await loadCells();
+            showToast('Sucesso', 'Célula removida.', 'info');
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    } catch (err) {
+        alert('Falha ao deletar célula');
+    }
+}
+
+async function executeCell(id) {
+    currentExecutingCellId = id;
+    const modalEl = document.getElementById('executionModal');
+    const logsDiv = document.getElementById('execLogs');
+    logsDiv.innerHTML = 'Executando...';
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    
+    const runBtn = document.getElementById('runCellBtn');
+    
+    const runHandler = async () => {
+        runBtn.disabled = true;
+        runBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Executando...';
+        logsDiv.innerHTML = 'Processando...';
+        
+        try {
+            const response = await fetch(`${API_BASE}/executions/cells/${id}/execute`, { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                // 1. Gráfico Plotly (HTML interativo) – usa iframe para isolamento e carregamento seguro
+                if (data.html) {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '500px';
+                    iframe.style.border = 'none';
+                    iframe.style.background = 'white';
+                    // Monta um documento completo com Plotly.js e o gráfico
+                    iframe.srcdoc = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"><\/script>
+                            <style>
+                                body { margin: 0; padding: 10px; background: white; }
+                                .plotly-graph { width: 100%; height: 100%; }
+                            </style>
+                        </head>
+                        <body>
+                            ${data.html}
+                        </body>
+                        </html>
+                    `;
+                    logsDiv.innerHTML = '';
+                    logsDiv.appendChild(iframe);
+                }
+                // 2. Imagem (ex: matplotlib)
+                else if (data.image) {
+                    logsDiv.innerHTML = `<img src="${data.image}" style="max-width:100%; border-radius:8px;">`;
+                }
+                // 3. Texto puro
+                else {
+                    logsDiv.innerHTML = `<pre>${escapeHtml(data.output || 'Execução concluída sem saída.')}</pre>`;
+                }
+                
+                // Recarrega a lista de células para atualizar o output salvo
+                await loadCells();
+            } else {
+                const errorMsg = data.error || data.message || 'Erro desconhecido';
+                logsDiv.innerHTML = `<pre class="text-danger">${escapeHtml(errorMsg)}</pre>`;
+            }
+        } catch (err) {
+            logsDiv.innerHTML = `<pre class="text-danger">Erro de rede: ${escapeHtml(err.message)}</pre>`;
+        } finally {
+            runBtn.disabled = false;
+            runBtn.innerHTML = '▶ Executar';
+        }
+    };
+    
+    runBtn.onclick = runHandler;
+    await runHandler();
+}
+// ==========================================================
+// DATASETS: upload, listagem, inspeção, delete, visualização
+// ==========================================================
+async function uploadDataset() {
+    if (!currentNotebookId) { alert('Selecione um notebook primeiro.'); return; }
+    const fileInput = document.getElementById('datasetFile');
+    const file = fileInput.files[0];
+    if (!file) { alert('Selecione um arquivo.'); return; }
+    const formData = new FormData();
+    formData.append('file', file);
+    const btn = document.querySelector('#datasetUploadModal .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando...';
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/datasets`, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('datasetUploadModal')).hide();
+            fileInput.value = '';
+            if (data.default_sql_connection) {
+                document.getElementById('notebookSqlConnection').value = data.default_sql_connection;
+                showToast('Banco SQL', 'Conexão padrão atualizada automaticamente.', 'success');
+            } else {
+                showToast('Sucesso', 'Dataset importado.', 'success');
+            }
+            await loadDatasets();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    } catch (err) {
+        alert('Falha no upload: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function loadDatasets() {
+    if (!currentNotebookId) return;
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/datasets`);
+        const result = await response.json();
+        if (result.success) {
+            renderDatasetsList(result.data);
+        } else {
+            console.error('Erro datasets:', result.error);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderDatasetsList(datasets) {
+    const container = document.getElementById('datasetsIntegrationContainer');
+    if (!container) return;
+    if (!datasets || datasets.length === 0) {
+        container.innerHTML = '<p class="text-muted small p-2">Nenhum dataset anexado a este notebook.</p>';
+        return;
+    }
+    container.innerHTML = `
+        <h6 class="mt-2"><i class="bi bi-database"></i> Datasets</h6>
+        ${datasets.map(dataset => {
+            const isDb = dataset.file_type === 'db' || dataset.is_sql_database;
+            return `
+            <div class="dataset-item d-flex align-items-center justify-content-between gap-2 p-2 mb-2 border rounded bg-light" style="flex-wrap: nowrap;">
+                <div class="d-flex align-items-center gap-2" style="min-width: 0; flex: 1;">
+                    <i class="bi ${isDb ? 'bi-database-fill text-primary' : 'bi-file-earmark-spreadsheet-fill text-success'} flex-shrink-0"></i>
+                    <span class="text-truncate small fw-medium text-dark" title="${dataset.filename}">${dataset.filename}</span>
+                </div>
+                <div class="d-flex gap-1 flex-shrink-0">
+                    ${isDb ? `
+                        <button class="btn btn-outline-secondary btn-sm" onclick="inspectDatabase(${dataset.id})" title="Inspecionar Tabelas"><i class="bi bi-eye"></i></button>
+                    ` : `
+                        <button class="btn btn-outline-secondary btn-sm" onclick="viewDatasetData(${dataset.id})" title="Visualizar Dados"><i class="bi bi-table"></i></button>
+                    `}
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteDataset(${dataset.id})" title="Remover"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>`;
+        }).join('')}
+    `;
+}
+
+async function deleteDataset(datasetId) {
+    if (!confirm('Excluir permanentemente este dataset?')) return;
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/datasets/${datasetId}`, { method: 'DELETE' });
+        const data = await response.json();
+        if (data.success) {
+            showToast('Sucesso', 'Dataset removido.', 'info');
+            await loadDatasets();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    } catch (err) {
+        alert('Falha ao deletar: ' + err.message);
+    }
+}
+
+async function inspectDatabase(datasetId) {
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/datasets/${datasetId}/inspect_sql`);
+        const data = await response.json();
+        if (data.success) {
+            const info = data.data;
+            // Log completo para depuração (abra o console do navegador)
+            console.log('Estrutura retornada:', info);
+            
+            let tableNames = [];
+            if (info.tables && Array.isArray(info.tables)) {
+                tableNames = info.tables.map(t => {
+                    // Tenta diferentes propriedades comuns
+                    if (typeof t === 'string') return t;
+                    if (t.name) return t.name;
+                    if (t.table_name) return t.table_name;
+                    if (t.tablename) return t.tablename;
+                    // Se nada funcionar, exibe o objeto como string
+                    return JSON.stringify(t);
+                });
+            }
+            
+            const msg = tableNames.length 
+                ? `Tabelas encontradas:\n- ${tableNames.join('\n- ')}`
+                : 'Nenhuma tabela encontrada.';
+            alert(msg);
+        } else {
+            alert('Falha na inspeção: ' + data.error);
+        }
+    } catch (err) {
+        alert('Erro: ' + err.message);
+    }
+}
+async function viewDatasetData(datasetId) {
+    try {
+        const response = await fetch(`${API_BASE}/notebooks/${currentNotebookId}/datasets/${datasetId}/data`);
+        const data = await response.json();
+        if (data.success) {
+            const preview = data.data.slice(0, 10);
+            alert('Visualização (primeiras 10 linhas):\n' + JSON.stringify(preview, null, 2));
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    } catch (err) {
+        alert('Erro: ' + err.message);
+    }
+}
+
+// ==========================================================
+// COPILOT
+// ==========================================================
+function setupCopilot() {
+    const toggleBtn = document.getElementById('copilotToggleBtn');
+    const panel = document.getElementById('copilotPanel');
+    const closeBtn = document.getElementById('copilotCloseBtn');
+    const clearBtn = document.getElementById('copilotClearBtn');
+    const sendBtn = document.getElementById('copilotSendBtn');
+    const input = document.getElementById('copilotInput');
+    const messagesDiv = document.getElementById('copilotMessages');
+    
+    toggleBtn.onclick = () => panel.classList.toggle('hidden');
+    closeBtn.onclick = () => panel.classList.add('hidden');
+    clearBtn.onclick = () => {
+        messagesDiv.innerHTML = '<div class="copilot-message assistant-message">Histórico limpo. Como posso ajudar?</div>';
+    };
+    
+    async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    
+    // Verifica se há um notebook ativo
+    if (!currentNotebookId) {
+        messagesDiv.innerHTML += `<div class="copilot-message assistant-message">❌ Selecione um notebook antes de perguntar.</div>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        return;
+    }
+    
+    messagesDiv.innerHTML += `<div class="copilot-message user-message">${escapeHtml(text)}</div>`;
+    input.value = '';
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.className = 'copilot-message assistant-message';
+    thinkingDiv.innerText = '🤔 Pensando...';
+    messagesDiv.appendChild(thinkingDiv);
+    
+    try {
+        const response = await fetch(`${API_BASE}/copilot/notebooks/${currentNotebookId}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })   // session_id opcional
+        });
+        const data = await response.json();
+        thinkingDiv.remove();
+        const reply = data.success ? data.response : 'Desculpe, ocorreu um erro.';
+        messagesDiv.innerHTML += `<div class="copilot-message assistant-message">${escapeHtml(reply)}</div>`;
+    } catch (err) {
+        thinkingDiv.innerText = '❌ Erro de comunicação com o assistente.';
+    }
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+    
+    sendBtn.onclick = sendMessage;
+    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+}
+
+// ==========================================================
+// UTILITÁRIOS
+// ==========================================================
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function showToast(title, message, type) {
+    console.log(`[${type}] ${title}: ${message}`);
+    // Opcional: implementar um toast visual
+}
+
+// ==========================================================
+// INICIALIZAÇÃO
+// ==========================================================
+document.addEventListener('DOMContentLoaded', () => {
+    loadNotebooks();
+    setupCopilot();
+    document.getElementById('cellType').addEventListener('change', function() {
+        document.getElementById('sqlConnectionDiv').style.display = this.value === 'sql' ? 'block' : 'none';
+    });
+});
+</script>
+</body>
+</html>

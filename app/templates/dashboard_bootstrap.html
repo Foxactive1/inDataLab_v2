@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InDataLab - Dashboard</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Highlight.js para sintaxe -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0f63d8;
+            --primary-dark: #0a47a0;
+            --success: #10a981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg-light: #f8fafc;
+            --text-secondary: #64748b;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #ffffff 100%);
+        }
+        
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 2px 8px rgba(15, 99, 216, 0.2);
+        }
+        
+        .sidebar {
+            background: white;
+            min-height: 100vh;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px 0;
+        }
+        
+        .sidebar .nav-link {
+            color: #0f172a;
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: #f8fafc;
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .sidebar .nav-link.active {
+            background: #e8f0ff;
+            border-left-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 99, 216, 0.3);
+        }
+        
+        .notebook-card {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .notebook-card:hover {
+            border-color: var(--primary);
+        }
+        
+        .notebook-card.active {
+            border-color: var(--primary);
+            background: #e8f0ff;
+        }
+        
+        .cell-type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 8px;
+        }
+        
+        .cell-type-badge.python { background: #e8f0ff; color: var(--primary); }
+        .cell-type-badge.sql { background: rgba(59, 130, 246, 0.1); color: var(--info); }
+        .cell-type-badge.markdown { background: rgba(16, 169, 129, 0.1); color: var(--success); }
+        .cell-type-badge.ai { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        
+        .code-editor {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .alert-success { background: #ecfdf5; border-color: var(--success); color: #065f46; }
+        .alert-danger { background: #fef2f2; border-color: var(--danger); color: #7f1d1d; }
+        .alert-warning { background: #fffbeb; border-color: var(--warning); color: #78350f; }
+        
+        .copilot-panel {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .copilot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8fafc;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            background: var(--primary);
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message.assistant {
+            background: white;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .hidden { display: none; }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; width: 250px; height: 100vh; z-index: 1000; transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { padding: 15px; }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-badge.active { background: #ecfdf5; color: var(--success); }
+        .status-badge.inactive { background: #fef2f2; color: var(--danger); }
+        .status-badge.loading { background: #fffbeb; color: var(--warning); }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-lightning-fill"></i> InDataLab
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="ms-auto">
+                    <span class="text-white me-3">
+                        <i class="bi bi-person-circle"></i> <span id="userDisplay">Usuário</span>
+                    </span>
+                    <button class="btn btn-light btn-sm" onclick="logout()">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 sidebar">
+                <div class="nav flex-column">
+                    <button class="nav-link active" onclick="switchTab('dashboard', event)">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </button>
+                    <button class="nav-link" onclick="switchTab('notebooks', event)">
+                        <i class="bi bi-journal-code"></i> Notebooks
+                    </button>
+                    <button class="nav-link" onclick="switchTab('cells', event)">
+                        <i class="bi bi-square"></i> Células
+                    </button>
+                    <button class="nav-link" onclick="switchTab('datasets', event)">
+                        <i class="bi bi-database"></i> Datasets
+                    </button>
+                    <button class="nav-link" onclick="switchTab('copilot', event)">
+                        <i class="bi bi-robot"></i> Copilot IA
+                    </button>
+                    <button class="nav-link" onclick="switchTab('system', event)">
+                        <i class="bi bi-gear"></i> Sistema
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 main-content">
+                <!-- Dashboard -->
+                <div id="dashboard" class="tab-content">
+                    <h2 class="mb-4">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </h2>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Notebooks</h5>
+                                    <h3 class="text-primary" id="notebookCount">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Células</h5>
+                                    <h3 class="text-info" id="cellCount">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Datasets</h5>
+                                    <h3 class="text-success" id="datasetCount">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Status</h5>
+                                    <h3><span class="status-badge active">Online</span></h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">Ações Rápidas</div>
+                        <div class="card-body">
+                            <button class="btn btn-primary me-2" onclick="switchTab('notebooks', null)">
+                                <i class="bi bi-plus"></i> Novo Notebook
+                            </button>
+                            <button class="btn btn-outline-primary me-2" onclick="switchTab('datasets', null)">
+                                <i class="bi bi-upload"></i> Upload Dataset
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="switchTab('system', null)">
+                                <i class="bi bi-info-circle"></i> Status do Sistema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notebooks -->
+                <div id="notebooks" class="tab-content hidden">
+                    <h2 class="mb-4"><i class="bi bi-journal-code"></i> Notebooks</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">Novo Notebook</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="text" id="notebookTitle" class="form-control mb-3" placeholder="Título do notebook">
+                                </div>
+                                <div class="col-md-6">
+                                    <select id="notebookKernel" class="form-select mb-3">
+                                        <option value="python">Python</option>
+                                        <option value="sql">SQL</option>
+                                        <option value="mixed">Misto (Python + SQL)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <textarea id="notebookDescription" class="form-control mb-3" placeholder="Descrição (opcional)" rows="3"></textarea>
+                            <button class="btn btn-primary" onclick="createNotebook()">
+                                <i class="bi bi-plus"></i> Criar Notebook
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">Meus Notebooks</div>
+                        <div class="card-body" id="notebooksList">
+                            <p class="text-muted">Carregando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cells -->
+                <div id="cells" class="tab-content hidden">
+                    <h2 class="mb-4"><i class="bi bi-square"></i> Células</h2>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i> Selecione um notebook para gerenciar suas células.
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Notebook</label>
+                            <select id="notebookSelectCell" class="form-select" onchange="loadCells()">
+                                <option value="">Selecione um notebook</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="cellsContainer" class="hidden">
+                        <div class="card mb-4">
+                            <div class="card-header">Nova Célula</div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Tipo</label>
+                                        <select id="cellType" class="form-select">
+                                            <option value="python">Python</option>
+                                            <option value="sql">SQL</option>
+                                            <option value="markdown">Markdown</option>
+                                            <option value="ai">IA Assistant</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <textarea id="cellContent" class="form-control mb-3" placeholder="Conteúdo da célula" rows="8"></textarea>
+                                <button class="btn btn-primary" onclick="createCell()">
+                                    <i class="bi bi-plus"></i> Adicionar Célula
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">Células do Notebook</div>
+                            <div class="card-body" id="cellsList">
+                                <p class="text-muted">Nenhuma célula criada.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Datasets -->
+                <div id="datasets" class="tab-content hidden">
+                    <h2 class="mb-4"><i class="bi bi-database"></i> Datasets</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">Upload de Dataset</div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Notebook</label>
+                                    <select id="notebookSelectDataset" class="form-select">
+                                        <option value="">Selecione um notebook</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Arquivo</label>
+                                <input type="file" id="datasetFile" class="form-control">
+                                <small class="text-muted">CSV, XLSX, JSON ou SQLite</small>
+                            </div>
+                            <button class="btn btn-primary" onclick="uploadDataset()">
+                                <i class="bi bi-upload"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">Datasets Carregados</div>
+                        <div class="card-body" id="datasetsList">
+                            <p class="text-muted">Nenhum dataset.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Copilot -->
+                <div id="copilot" class="tab-content hidden">
+                    <h2 class="mb-4"><i class="bi bi-robot"></i> Copilot IA</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold">Selecione um Notebook</label>
+                            <select id="notebookSelectCopilot" class="form-select" onchange="loadCopilotChat()">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="copilotContainer" class="hidden">
+                        <div class="copilot-panel">
+                            <div class="copilot-messages" id="copilotMessages">
+                                <div class="message assistant">
+                                    Olá! Sou o Copilot IA. Posso ajudar você com análise de dados, sugestões de código e muito mais!
+                                </div>
+                            </div>
+                            <div class="p-3 border-top">
+                                <div class="input-group">
+                                    <input type="text" id="copilotInput" class="form-control" placeholder="Digite sua pergunta...">
+                                    <button class="btn btn-primary" onclick="sendCopilotMessage()">
+                                        <i class="bi bi-send"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System -->
+                <div id="system" class="tab-content hidden">
+                    <h2 class="mb-4"><i class="bi bi-gear"></i> Status do Sistema</h2>
+                    
+                    <div class="card">
+                        <div class="card-header">Informações do Sistema</div>
+                        <div class="card-body">
+                            <button class="btn btn-primary mb-3" onclick="fetchSystemStatus()">
+                                <i class="bi bi-arrow-clockwise"></i> Atualizar
+                            </button>
+                            <div id="systemInfo">
+                                <p class="text-muted">Clique em atualizar para carregar as informações.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Configuração da API
+        const API_BASE = 'http://localhost:5000';
+        let currentUser = null;
+        let currentNotebookId = null;
+        let accessToken = localStorage.getItem('access_token');
+
+        // Verificar autenticação
+        if (!accessToken) {
+            window.location.href = 'login.html';
+        }
+
+        // Headers padrão
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            };
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadNotebooks();
+            loadSystemStatus();
+        });
+
+        // ====== AUTH ======
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (user) {
+                currentUser = user;
+                document.getElementById('userDisplay').textContent = user.name || user.email;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        // ====== NAVEGAÇÃO ======
+        function switchTab(tabName, event) {
+            if (event) event.preventDefault();
+            
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Mostrar aba selecionada
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Atualizar link ativo
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event?.target?.closest('.nav-link')?.classList.add('active');
+        }
+
+        // ====== NOTEBOOKS ======
+        async function loadNotebooks() {
+            try {
+                const response = await fetch(`${API_BASE}/api/notebooks`, {
+                    headers: getHeaders()
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const notebooks = data.data || [];
+                    document.getElementById('notebookCount').textContent = notebooks.length;
+                    
+                    // Popular select
+                    const selects = ['notebookSelectCell', 'notebookSelectDataset', 'notebookSelectCopilot'];
+                    selects.forEach(selectId => {
+                        const select = document.getElementById(selectId);
+                        select.innerHTML = '<option value="">Selecione um notebook</option>';
+                        notebooks.forEach(nb => {
+                            const option = document.createElement('option');
+                            option.value = nb.id;
+                            option.textContent = nb.title;
+                            select.appendChild(option);
+                        });
+                    });
+                    
+                    // Popular lista
+                    const notebooksList = document.getElementById('notebooksList');
+                    if (notebooks.length === 0) {
+                        notebooksList.innerHTML = '<p class="text-muted">Nenhum notebook criado.</p>';
+                    } else {
+                        notebooksList.innerHTML = notebooks.map(nb => `
+                            <div class="card mb-3 notebook-card" onclick="selectNotebook(${nb.id})">
+                                <div class="card-body">
+                                    <h5 class="card-title">${nb.title}</h5>
+                                    <p class="card-text text-muted">${nb.description || 'Sem descrição'}</p>
+                                    <small class="text-secondary">Kernel: ${nb.kernel_type}</small>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteNotebook(${nb.id}, event)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar notebooks:', error);
+                alert('Erro ao carregar notebooks');
+            }
+        }
+
+        async function createNotebook() {
+            const title = document.getElementById('notebookTitle').value;
+            const kernel = document.getElementById('notebookKernel').value;
+            const description = document.getElementById('notebookDescription').value;
+            
+            if (!title) {
+                alert('Título é obrigatório');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/notebooks`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ title, kernel_type: kernel, description })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Notebook criado com sucesso!');
+                    document.getElementById('notebookTitle').value = '';
+                    document.getElementById('notebookDescription').value = '';
+                    loadNotebooks();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro ao criar notebook:', error);
+            }
+        }
+
+        function selectNotebook(notebookId) {
+            currentNotebookId = notebookId;
+            document.querySelectorAll('.notebook-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.target.closest('.notebook-card').classList.add('active');
+        }
+
+        async function deleteNotebook(notebookId, event) {
+            event.stopPropagation();
+            if (!confirm('Deletar notebook?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/notebooks/${notebookId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Notebook deletado!');
+                    loadNotebooks();
+                }
+            } catch (error) {
+                console.error('Erro ao deletar notebook:', error);
+            }
+        }
+
+        // ====== CELLS ======
+        async function loadCells() {
+            const notebookId = document.getElementById('notebookSelectCell').value;
+            if (!notebookId) {
+                document.getElementById('cellsContainer').classList.add('hidden');
+                return;
+            }
+            
+            currentNotebookId = notebookId;
+            document.getElementById('cellsContainer').classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/notebooks/${notebookId}/cells`, {
+                    headers: getHeaders()
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const cells = data.data || [];
+                    document.getElementById('cellCount').textContent = cells.length;
+                    
+                    const cellsList = document.getElementById('cellsList');
+                    if (cells.length === 0) {
+                        cellsList.innerHTML = '<p class="text-muted">Nenhuma célula.</p>';
+                    } else {
+                        cellsList.innerHTML = cells.map((cell, idx) => `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <span class="cell-type-badge ${cell.cell_type}">${cell.cell_type}</span>
+                                        <small class="text-muted">Célula ${idx + 1}</small>
+                                    </div>
+                                    <div class="code-editor">${escapeHtml(cell.content)}</div>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-primary" onclick="executeCell(${cell.id})">
+                                            <i class="bi bi-play"></i> Executar
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteCell(${cell.id})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar células:', error);
+            }
+        }
+
+        async function createCell() {
+            if (!currentNotebookId) {
+                alert('Selecione um notebook primeiro');
+                return;
+            }
+            
+            const cellType = document.getElementById('cellType').value;
+            const content = document.getElementById('cellContent').value;
+            
+            if (!content) {
+                alert('Conteúdo é obrigatório');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/notebooks/${currentNotebookId}/cells`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ cell_type: cellType, content })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Célula criada!');
+                    document.getElementById('cellContent').value = '';
+                    loadCells();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro ao criar célula:', error);
+            }
+        }
+
+        async function executeCell(cellId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/cells/${cellId}/execute`, {
+                    method: 'POST',
+                    headers: getHeaders()
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Célula executada com sucesso!');
+                    loadCells();
+                } else {
+                    alert('Erro na execução: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro ao executar célula:', error);
+            }
+        }
+
+        async function deleteCell(cellId) {
+            if (!confirm('Deletar célula?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/notebooks/${currentNotebookId}/cells/${cellId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Célula deletada!');
+                    loadCells();
+                }
+            } catch (error) {
+                console.error('Erro ao deletar célula:', error);
+            }
+        }
+
+        // ====== DATASETS ======
+        async function uploadDataset() {
+            const notebookId = document.getElementById('notebookSelectDataset').value;
+            const file = document.getElementById('datasetFile').files[0];
+            
+            if (!notebookId || !file) {
+                alert('Selecione notebook e arquivo');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/notebooks/${notebookId}/datasets`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Dataset enviado!');
+                    document.getElementById('datasetFile').value = '';
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erro ao upload:', error);
+            }
+        }
+
+        // ====== COPILOT ======
+        async function loadCopilotChat() {
+            const notebookId = document.getElementById('notebookSelectCopilot').value;
+            if (!notebookId) {
+                document.getElementById('copilotContainer').classList.add('hidden');
+                return;
+            }
+            
+            currentNotebookId = notebookId;
+            document.getElementById('copilotContainer').classList.remove('hidden');
+        }
+
+        async function sendCopilotMessage() {
+            const input = document.getElementById('copilotInput');
+            const message = input.value.trim();
+            
+            if (!message || !currentNotebookId) return;
+            
+            // Adicionar mensagem do usuário
+            const messagesDiv = document.getElementById('copilotMessages');
+            messagesDiv.innerHTML += `<div class="message user">${escapeHtml(message)}</div>`;
+            input.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/copilot/notebooks/${currentNotebookId}/chat`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ message })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    messagesDiv.innerHTML += `<div class="message assistant">${escapeHtml(data.response)}</div>`;
+                } else {
+                    messagesDiv.innerHTML += `<div class="message assistant">Erro: ${data.error}</div>`;
+                }
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        // ====== SYSTEM ======
+        async function fetchSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/system/status`, {
+                    headers: getHeaders()
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    const systemInfo = document.getElementById('systemInfo');
+                    const info = data.data;
+                    systemInfo.innerHTML = `
+                        <table class="table">
+                            <tr>
+                                <td><strong>Status</strong></td>
+                                <td><span class="status-badge active">Online</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Versão</strong></td>
+                                <td>${info.version || 'N/A'}</td>
+                            </tr>
+                            ${info.uptime ? `<tr><td><strong>Uptime</strong></td><td>${info.uptime}s</td></tr>` : ''}
+                            ${info.cpu_percent ? `<tr><td><strong>CPU</strong></td><td>${info.cpu_percent}%</td></tr>` : ''}
+                            ${info.memory_percent ? `<tr><td><strong>Memória</strong></td><td>${info.memory_percent}%</td></tr>` : ''}
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar status:', error);
+            }
+        }
+
+        // ====== UTILITÁRIOS ======
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Carregar dados iniciais
+        function loadSystemStatus() {
+            fetchSystemStatus();
+        }
+    </script>
+</body>
+</html>
