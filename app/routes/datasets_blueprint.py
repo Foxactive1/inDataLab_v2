@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from app.executor.kernel_manager import refresh_datasets_in_session
 from app.services.dataset_service import (
     save_dataset,
@@ -22,6 +23,10 @@ bp = Blueprint(
     __name__,
     url_prefix="/api/notebooks/<int:notebook_id>/datasets"
 )
+
+@bp.before_request
+def require_dataset_auth():
+    verify_jwt_in_request()
 
 # ==========================================================
 # HELPERS
@@ -65,27 +70,8 @@ def error_response(message, status=400):
 
 
 def get_user_id():
-    """
-    MVP Authentication.
-    """
-
-    user = User.query.filter_by(
-        is_active=True
-    ).first()
-
-    if not user:
-
-        user = User(
-            name="Default",
-            email="default@example.com",
-            password_hash="",
-            is_active=True
-        )
-
-        db.session.add(user)
-        db.session.commit()
-
-    return user.id
+    """ID do usuário do token validado neste blueprint."""
+    return int(get_jwt_identity())
 
 
 def validate_notebook_owner(notebook_id, user_id):

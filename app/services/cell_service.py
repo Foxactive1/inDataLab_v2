@@ -73,8 +73,8 @@ class CellService:
             if position is None:
                 max_pos = db.session.query(db.func.max(Cell.position)).filter_by(
                     notebook_id=notebook_id, is_deleted=False
-                ).scalar() or -1
-                position = max_pos + 1
+                ).scalar()
+                position = 0 if max_pos is None else max_pos + 1
             
             tags_normalized = CellService._normalize_tags(tags)
             
@@ -101,7 +101,7 @@ class CellService:
         cell = Cell.query.get(cell_id)
         if not cell or cell.is_deleted:
             return None
-        if user_id:
+        if user_id is not None:
             notebook = Notebook.query.get(cell.notebook_id)
             if not notebook or notebook.user_id != user_id:
                 return None

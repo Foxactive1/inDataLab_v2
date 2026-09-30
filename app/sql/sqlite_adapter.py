@@ -5,6 +5,7 @@ Responsável por criar conexões SQLite seguras e reutilizáveis.
 
 import os
 import sqlite3
+from pathlib import Path
 
 
 class SQLiteAdapter:
@@ -23,7 +24,10 @@ class SQLiteAdapter:
                 f"Banco SQLite não encontrado: {db_path}"
             )
 
-        conn = sqlite3.connect(db_path)
+        # URI mode=ro prevents writes even if SQL validation misses a statement.
+        db_file = Path(db_path).resolve(strict=True)
+        conn = sqlite3.connect(f"{db_file.as_uri()}?mode=ro", uri=True)
+        conn.execute("PRAGMA query_only=ON")
 
         # Permite acesso por nome da coluna
         conn.row_factory = sqlite3.Row

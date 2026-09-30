@@ -5,6 +5,7 @@ CRUD de notebooks do InDataLab
 """
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 import logging
 import traceback
 
@@ -26,22 +27,19 @@ notebooks_bp = Blueprint(
     url_prefix='/api/notebooks'
 )
 
+@notebooks_bp.before_request
+def require_notebook_auth():
+    verify_jwt_in_request()
+
+
 
 # ==========================================================
 # HELPERS
 # ==========================================================
 
 def get_current_user_id():
-    """
-    MVP authentication.
-
-    Futuro:
-    - JWT
-    - OAuth
-    - Session auth
-    """
-
-    return 1
+    """ID do usuário autenticado pelo JWT obrigatório do blueprint."""
+    return int(get_jwt_identity())
 
 
 def parse_pagination():

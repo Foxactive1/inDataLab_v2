@@ -30,6 +30,9 @@ class Config:
 
     IS_RAILWAY = bool(os.getenv("RAILWAY_ENVIRONMENT"))
 
+    if IS_PRODUCTION and (JWT_SECRET_KEY == 'sua-chave-jwt-muito-segura'):
+        raise RuntimeError("JWT_SECRET_KEY deve ser configurada em produção")
+
     # =========================================================
     # Segurança
     # =========================================================
@@ -38,6 +41,9 @@ class Config:
         "SECRET_KEY",
         "indatalab-dev-secret-change-in-production"
     )
+
+    if IS_PRODUCTION and SECRET_KEY == "indatalab-dev-secret-change-in-production":
+        raise RuntimeError("SECRET_KEY deve ser configurada em produção")
 
     # =========================================================
     # Diretórios
