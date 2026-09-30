@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.orm import joinedload
 
 from app.models.cell import Cell
@@ -20,6 +21,10 @@ executions_bp = Blueprint(
     __name__,
     url_prefix="/api/executions"
 )
+
+@executions_bp.before_request
+def require_execution_auth():
+    jwt_required()()
 
 
 # ==========================================================
@@ -55,16 +60,7 @@ def error_response(message, status=400, details=None):
 
 
 def get_current_user_id():
-    """
-    MVP authentication.
-
-    Futuramente:
-    - JWT
-    - Session
-    - OAuth
-    """
-
-    return 1
+    return int(get_jwt_identity())
 
 
 def get_user_cell(cell_id: int, user_id: int):
