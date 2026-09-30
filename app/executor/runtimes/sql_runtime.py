@@ -4,6 +4,9 @@ Executa queries SQL em datasets SQLite.
 """
 
 import time
+from pathlib import Path
+
+from app.models.dataset import Dataset
 import pandas as pd
 
 from app.executor.runtimes.base import BaseRuntime
@@ -78,19 +81,22 @@ class SQLRuntime(BaseRuntime):
             }
 
     def _resolve_connection(self, cell):
-
-        if getattr(cell, "sql_connection", None):
-            return cell.sql_connection
-
-        if getattr(cell, "dataset_ref", None):
-            return cell.dataset_ref.file_path
-
-        if (
-            getattr(cell, "notebook", None)
-            and cell.notebook.default_sql_connection
-        ):
-            return cell.notebook.default_sql_connection
-
-        raise ValueError(
-            "Nenhuma conexão SQL configurada."
+        """Apenas SQLite cadastrado como dataset do próprio notebook."""
+        candidate = (
+            getattr(cell, "sql_connection", None)
+            or (cell.dataset_ref.file_path if getattr(cell, "dataset_ref", None) else None)
+            or (cell.notebook.default_sql_connection if getattr(cell, "notebook", None) else None)
         )
+        if not candidate:
+            raise ValueError("Nenhuma conexão SQL configurada.")
+
+        target = Path(candidate).resolve(strict=True)
+        datasets = Dataset.query.filter_by(notebook_id=cell.notebook_id).all()
+        allowed = any(
+            (ds.file_type == "db" or ds.is_sql_database)
+            and Path(ds.file_path).resolve(strict=False) == target
+            for ds in datasets
+        )
+        if not allowed:
+            raise PermissionError("Conexão SQL não pertence aos datasets SQLite deste notebook.")
+        return str(target)
