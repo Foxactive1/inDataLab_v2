@@ -9,7 +9,7 @@ Data: 2026
 """
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from typing import Dict, Optional, Tuple, Any
 from functools import wraps
 import logging
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 @bp.before_request
 def require_copilot_auth():
     if request.endpoint != 'copilot.health_check':
-        jwt_required()()
+        verify_jwt_in_request()
 
 # Constantes
 DEFAULT_USER_NAME = "Usuário Padrão"
