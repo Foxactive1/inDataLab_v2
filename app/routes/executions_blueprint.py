@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from sqlalchemy.orm import joinedload
 
 from app.models.cell import Cell
@@ -24,7 +24,7 @@ executions_bp = Blueprint(
 
 @executions_bp.before_request
 def require_execution_auth():
-    jwt_required()()
+    verify_jwt_in_request()
 
 
 # ==========================================================
