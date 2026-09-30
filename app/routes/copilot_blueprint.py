@@ -9,6 +9,7 @@ Data: 2026
 """
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from typing import Dict, Optional, Tuple, Any
 from functools import wraps
 import logging
@@ -30,6 +31,11 @@ from app.database.db import db
 
 bp = Blueprint('copilot', __name__, url_prefix='/api/copilot')
 logger = logging.getLogger(__name__)
+
+@bp.before_request
+def require_copilot_auth():
+    if request.endpoint != 'copilot.health_check':
+        jwt_required()()
 
 # Constantes
 DEFAULT_USER_NAME = "Usuário Padrão"
@@ -60,37 +66,12 @@ def handle_database_errors(f):
 # FUNÇÕES AUXILIARES
 # ============================================================================
 
-def get_or_create_default_user() -> User:
-    """
-    Obtém ou cria um usuário padrão para operações do Copilot.
-    
-    Returns:
-        User: Instância do usuário padrão ativo.
-        
-    Raises:
-        Exception: Se houver erro ao criar ou recuperar usuário.
-    """
-    try:
-        user = User.query.filter_by(is_active=True).first()
-        
-        if not user:
-            user = User(
-                name=DEFAULT_USER_NAME,
-                email=DEFAULT_USER_EMAIL,
-                # IMPORTANTE: Em produção, usar hash seguro via werkzeug.security
-                password_hash="__placeholder__",
-                is_active=True
-            )
-            db.session.add(user)
-            db.session.commit()
-            logger.info(f"Usuário padrão criado com ID: {user.id} ({DEFAULT_USER_EMAIL})")
-        
-        return user
-    
-    except Exception as e:
-        db.session.rollback()
-        logger.critical(f"Falha ao obter/criar usuário padrão: {str(e)}")
-        raise
+def get_authenticated_user() -> User:
+    """Resolve o usuário autenticado sem criar contas automáticas."""
+    user = db.session.get(User, int(get_jwt_identity()))
+    if user is None or not user.is_active:
+        raise ValueError("Usuário inválido ou inativo")
+    return user
 
 
 def get_notebook_context(notebook_id: int, user_id: int) -> str:
@@ -286,7 +267,7 @@ def copilot_chat(notebook_id: int) -> Tuple[Any, int]:
             )
         
         # Usuário
-        user = get_or_create_default_user()
+        user = get_authenticated_user()
         user_id = user.id
         
         # Notebook (verificação de permissão)
@@ -395,7 +376,7 @@ def clear_chat(notebook_id: int) -> Tuple[Any, int]:
         Tuple[dict, int]: (Response JSON, HTTP Status Code)
     """
     try:
-        user = get_or_create_default_user()
+        user = get_authenticated_user()
         session_id = SESSION_ID_PATTERN.format(notebook_id=notebook_id)
         
         # Verificar se notebook existe e pertence ao usuário
@@ -413,6 +394,7 @@ def clear_chat(notebook_id: int) -> Tuple[Any, int]:
         # Deletar conversações
         deleted_count = AIConversation.query.filter_by(
             conversation_session_id=session_id,
+            notebook_id=notebook_id,
             user_id=user.id
         ).delete()
         
