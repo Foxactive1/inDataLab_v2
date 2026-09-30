@@ -5,7 +5,7 @@ CRUD de notebooks do InDataLab
 """
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 import logging
 import traceback
 
@@ -29,7 +29,7 @@ notebooks_bp = Blueprint(
 
 @notebooks_bp.before_request
 def require_notebook_auth():
-    jwt_required()()
+    verify_jwt_in_request()
 
 
 
