@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from app.executor.kernel_manager import refresh_datasets_in_session
 from app.services.dataset_service import (
     save_dataset,
@@ -26,7 +26,7 @@ bp = Blueprint(
 
 @bp.before_request
 def require_dataset_auth():
-    jwt_required()()
+    verify_jwt_in_request()
 
 # ==========================================================
 # HELPERS
