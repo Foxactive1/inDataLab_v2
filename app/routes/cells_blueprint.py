@@ -4,7 +4,7 @@ Rotas CRUD para células dentro de notebooks (suporte a python, sql, markdown, a
 """
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 from app.services.cell_service import CellService
 from app.utils import APIResponse, ValidateRequest, serialize_model, serialize_models
@@ -18,7 +18,7 @@ cells_bp = Blueprint(
 
 @cells_bp.before_request
 def require_cell_auth():
-    jwt_required()()
+    verify_jwt_in_request()
 
 
 def _get_user_id():
