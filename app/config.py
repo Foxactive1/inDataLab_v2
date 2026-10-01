@@ -195,6 +195,7 @@ class TestingConfig(Config):
     TESTING = True
 
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"check_same_thread": False}}
 
     WTF_CSRF_ENABLED = False
 
