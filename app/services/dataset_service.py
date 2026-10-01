@@ -128,15 +128,15 @@ def save_dataset(file, notebook_id, user_id):
         notebook_id=notebook_id,
         filename=original_name,
         file_type=ext_lower[1:],
-        file_path=filepath,
+        relative_path=os.path.relpath(filepath, current_app.config['UPLOAD_FOLDER']),
         file_size=file_size,
         rows=rows,
         columns=cols,
-        column_names=json.dumps(column_names) if column_names else None,
+        column_names=column_names,
         description=f"Importado de {original_name}",
         is_public=False,
         is_sql_database=is_sql_db,   # ← ESSENCIAL para .db
-        extra_metadata=json.dumps({"user_id": user_id})
+        extra_metadata={"user_id": user_id}
     )
     db.session.add(dataset)
 

@@ -54,17 +54,7 @@ def error_response(message, status=400, details=None):
     return jsonify(response), status
 
 
-def get_current_user_id():
-    """
-    MVP authentication.
-
-    Futuramente:
-    - JWT
-    - Session
-    - OAuth
-    """
-
-    return 1
+from app.utils.current_user import get_current_user_id
 
 
 def get_user_cell(cell_id: int, user_id: int):

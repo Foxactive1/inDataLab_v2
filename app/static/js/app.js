@@ -1,5 +1,9 @@
 class App {
     constructor() {
+        if (!localStorage.getItem('access_token')) {
+            window.location.replace('/login');
+            return;
+        }
         this.notebook = new NotebookManager();
         this.cell     = new CellManager();
         this.chat     = new ChatManager();

@@ -64,28 +64,7 @@ def error_response(message, status=400):
     }), status
 
 
-def get_user_id():
-    """
-    MVP Authentication.
-    """
-
-    user = User.query.filter_by(
-        is_active=True
-    ).first()
-
-    if not user:
-
-        user = User(
-            name="Default",
-            email="default@example.com",
-            password_hash="",
-            is_active=True
-        )
-
-        db.session.add(user)
-        db.session.commit()
-
-    return user.id
+from app.utils.current_user import get_current_user_id as get_user_id
 
 
 def validate_notebook_owner(notebook_id, user_id):

@@ -101,7 +101,7 @@ def _load_datasets_into_session(notebook_id: int, session_dict: Dict[str, Any]) 
             col_names = []
             if ds.column_names:
                 try:
-                    col_names = json.loads(ds.column_names or [])
+                    col_names = ds.column_names if isinstance(ds.column_names, list) else json.loads(ds.column_names)
                 except json.JSONDecodeError:
                     logger.warning(f"Dataset {ds.id} tem column_names inválido")
             datasets_info[ds.filename] = {

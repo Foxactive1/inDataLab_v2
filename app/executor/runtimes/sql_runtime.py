@@ -3,8 +3,10 @@ SQL Runtime
 Executa queries SQL em datasets SQLite.
 """
 
+import os
 import time
 import pandas as pd
+from sqlalchemy import create_engine, text
 
 from app.executor.runtimes.base import BaseRuntime
 from app.sql.sqlite_adapter import SQLiteAdapter
@@ -38,19 +40,32 @@ class SQLRuntime(BaseRuntime):
                 cell
             )
 
-            conn = SQLiteAdapter.connect(
-                connection_str
-            )
-
-            try:
-
-                df = pd.read_sql(
-                    cell.content,
-                    conn
-                )
-
-            finally:
-                conn.close()
+            if connection_str == "neon":
+                # Uma credencial exclusiva de LEITURA deve ser fornecida em .env.
+                dsn = os.getenv("READONLY_DATABASE_URL")
+                if not dsn:
+                    raise ValueError("READONLY_DATABASE_URL não configurada")
+                if dsn.startswith("postgres://"):
+                    dsn = dsn.replace("postgres://", "postgresql+psycopg://", 1)
+                elif dsn.startswith("postgresql://"):
+                    dsn = dsn.replace("postgresql://", "postgresql+psycopg://", 1)
+                if not dsn.startswith("postgresql+psycopg://"):
+                    raise ValueError("A conexão Neon somente leitura exige PostgreSQL/psycopg")
+                engine = create_engine(dsn, pool_pre_ping=True, connect_args={"connect_timeout": 10})
+                try:
+                    with engine.connect() as conn:
+                        conn.execute(text("SET TRANSACTION READ ONLY"))
+                        conn.execute(text("SET LOCAL statement_timeout = '10000ms'"))
+                        df = pd.read_sql_query(text(cell.content), conn)
+                finally:
+                    engine.dispose()
+            else:
+                # Compatibilidade com datasets SQLite existentes.
+                conn = SQLiteAdapter.connect(connection_str)
+                try:
+                    df = pd.read_sql(cell.content, conn)
+                finally:
+                    conn.close()
 
             records = sanitize_json(
                 df.to_dict(

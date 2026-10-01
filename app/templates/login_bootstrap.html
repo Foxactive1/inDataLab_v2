@@ -300,11 +300,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        const API_BASE = 'http://localhost:5000';
+        const API_BASE = window.location.origin;
 
         // Verificar se já está autenticado
         if (localStorage.getItem('access_token')) {
-            window.location.href = 'dashboard.html';
+            window.location.href = '/';
         }
 
         // Alternar entre abas
@@ -359,7 +359,7 @@
                     localStorage.setItem('currentUser', JSON.stringify(data.user));
                     showAlert('✓ Login realizado com sucesso!', 'success');
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = '/';
                     }, 1500);
                 } else {
                     showAlert(data.error || 'Erro ao fazer login', 'danger');
@@ -424,7 +424,7 @@
                         localStorage.setItem('access_token', loginData.access_token);
                         localStorage.setItem('currentUser', JSON.stringify(loginData.user));
                         setTimeout(() => {
-                            window.location.href = 'dashboard.html';
+                            window.location.href = '/';
                         }, 1500);
                     }
                 } else {

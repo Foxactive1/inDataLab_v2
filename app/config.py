@@ -10,6 +10,9 @@ Compatível com:
 
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
@@ -21,7 +24,11 @@ class Config:
     # =========================================================
     # Ambiente
     # =========================================================
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'sua-chave-jwt-muito-segura')
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or os.environ.get("SECRET_KEY", "indatalab-dev-only")
+    if os.getenv("FLASK_ENV") == "production" and (
+        not os.environ.get("JWT_SECRET_KEY") or not os.environ.get("SECRET_KEY")
+    ):
+        raise RuntimeError("JWT_SECRET_KEY e SECRET_KEY são obrigatórias em produção")
     FLASK_ENV = os.getenv("FLASK_ENV", "development")
 
     IS_PRODUCTION = FLASK_ENV == "production"
@@ -59,21 +66,17 @@ class Config:
 
     DEFAULT_SQLITE_URI = f"sqlite:///{SQLITE_PATH}"
 
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL",
-        DEFAULT_SQLITE_URI
-    )
-
-    # Railway usa postgres://
-    # SQLAlchemy moderno prefere postgresql://
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", DEFAULT_SQLITE_URI)
     if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
-        SQLALCHEMY_DATABASE_URI = (
-            SQLALCHEMY_DATABASE_URI.replace(
-                "postgres://",
-                "postgresql://",
-                1
-            )
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+            "postgres://", "postgresql+psycopg://", 1
         )
+    elif SQLALCHEMY_DATABASE_URI.startswith("postgresql://"):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+            "postgresql://", "postgresql+psycopg://", 1
+        )
+    if IS_PRODUCTION and not os.getenv("DATABASE_URL"):
+        raise RuntimeError("DATABASE_URL é obrigatória em produção")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -84,6 +87,13 @@ class Config:
     }
     if SQLALCHEMY_DATABASE_URI.startswith("sqlite"):
         engine_options["connect_args"] = {"check_same_thread": False}
+    else:
+        engine_options.update({
+            "pool_size": 5,
+            "max_overflow": 5,
+            "pool_timeout": 30,
+            "connect_args": {"connect_timeout": 10},
+        })
     SQLALCHEMY_ENGINE_OPTIONS = engine_options
 
     # =========================================================
@@ -185,6 +195,7 @@ class TestingConfig(Config):
     TESTING = True
 
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"check_same_thread": False}}
 
     WTF_CSRF_ENABLED = False
 

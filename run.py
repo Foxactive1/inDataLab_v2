@@ -52,7 +52,7 @@ if __name__ == '__main__':
     ╚═══════════════════════════════════╝
     
     Debug: False
-    Database: {app.config.get('SQLALCHEMY_DATABASE_URI')}
+    Database: {app.config.get('SQLALCHEMY_DATABASE_URI', '').split(':', 1)[0]} (credenciais ocultas)
     Groq Model: {app.config.get('GROQ_MODEL')}
     
     ▶ Servidor rodando em http://localhost:{port}
