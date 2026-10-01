@@ -31,17 +31,7 @@ notebooks_bp = Blueprint(
 # HELPERS
 # ==========================================================
 
-def get_current_user_id():
-    """
-    MVP authentication.
-
-    Futuro:
-    - JWT
-    - OAuth
-    - Session auth
-    """
-
-    return 1
+from app.utils.current_user import get_current_user_id
 
 
 def parse_pagination():
