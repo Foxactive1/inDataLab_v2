@@ -61,36 +61,12 @@ def handle_database_errors(f):
 # ============================================================================
 
 def get_or_create_default_user() -> User:
-    """
-    Obtém ou cria um usuário padrão para operações do Copilot.
-    
-    Returns:
-        User: Instância do usuário padrão ativo.
-        
-    Raises:
-        Exception: Se houver erro ao criar ou recuperar usuário.
-    """
-    try:
-        user = User.query.filter_by(is_active=True).first()
-        
-        if not user:
-            user = User(
-                name=DEFAULT_USER_NAME,
-                email=DEFAULT_USER_EMAIL,
-                # IMPORTANTE: Em produção, usar hash seguro via werkzeug.security
-                password_hash="__placeholder__",
-                is_active=True
-            )
-            db.session.add(user)
-            db.session.commit()
-            logger.info(f"Usuário padrão criado com ID: {user.id} ({DEFAULT_USER_EMAIL})")
-        
-        return user
-    
-    except Exception as e:
-        db.session.rollback()
-        logger.critical(f"Falha ao obter/criar usuário padrão: {str(e)}")
-        raise
+    """Compatibilidade: resolve somente o usuário identificado pelo JWT."""
+    from app.utils.current_user import get_current_user_id
+    user = db.session.get(User, get_current_user_id())
+    if user is None or not user.is_active:
+        raise ValueError("Usuário autenticado indisponível")
+    return user
 
 
 def get_notebook_context(notebook_id: int, user_id: int) -> str:
