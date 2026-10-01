@@ -52,15 +52,8 @@ def create_app(config_class=CURRENT_CONFIG):
     JWTManager(app)
     bcrypt = Bcrypt(app)
 
-    # =========================================================
-    # 5. Garantir criação de tabelas (DEV/MVP)
-    # =========================================================
-    with app.app_context():
-        from .models import (
-            User, Notebook, Cell, Execution,
-            Dataset, AIConversation
-        )
-        db.create_all()
+    # Registrar todos os modelos sem modificar o esquema Neon existente.
+    from . import models  # noqa: F401
 
     # =========================================================
     # 6. Registrar Blueprints
