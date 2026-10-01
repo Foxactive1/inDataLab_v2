@@ -16,9 +16,7 @@ cells_bp = Blueprint(
 )
 
 
-def _get_user_id():
-    # Hardcoded para MVP - substituir por autenticação real
-    return 1
+from app.utils.current_user import get_current_user_id as _get_user_id
 
 
 # CRIAR CÉLULA
