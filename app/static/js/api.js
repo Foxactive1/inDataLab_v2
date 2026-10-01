@@ -10,8 +10,12 @@ class API {
         const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
 
         try {
+            const token = localStorage.getItem('access_token');
+            const headers = new Headers(options.headers || {});
+            if (token) headers.set('Authorization', `Bearer ${token}`);
             const res = await fetch(`${this.base}${endpoint}`, {
                 ...options,
+                headers,
                 signal: controller.signal,
             });
 
