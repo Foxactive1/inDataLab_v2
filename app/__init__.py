@@ -4,7 +4,8 @@ Factory Flask - arquitetura consolidada
 """
 
 import os
-from flask import Flask, jsonify, render_template, send_from_directory,send_file
+from flask import Flask, jsonify, render_template, send_from_directory, request, redirect, url_for
+from flask_jwt_extended import verify_jwt_in_request
 
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
@@ -75,6 +76,12 @@ def create_app(config_class=CURRENT_CONFIG):
     app.register_blueprint(auth_bp)   # <-- NOVO
     app.register_blueprint(system_bp)
 
+    # Rejeitar acesso anônimo antes dos handlers (incluindo Copilot e datasets).
+    @app.before_request
+    def require_api_auth():
+        if request.path.startswith("/api/"):
+            verify_jwt_in_request()
+
     # =========================================================
     # 7. Servir arquivos estáticos de gráficos (plotly/matplotlib)
     # =========================================================
@@ -99,6 +106,10 @@ def create_app(config_class=CURRENT_CONFIG):
     # 9. Frontend
     # =========================================================
     
+    @app.route("/login")
+    def login_page():
+        return render_template("login_bootstrap.html")
+
     @app.route("/")
     def index():
         return render_template("index.html")
