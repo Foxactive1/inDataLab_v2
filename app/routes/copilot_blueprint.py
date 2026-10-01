@@ -120,7 +120,7 @@ def get_notebook_context(notebook_id: int, user_id: int) -> str:
             if ds.column_names:
                 try:
                     import json
-                    cols = json.loads(ds.column_names)
+                    cols = (ds.column_names if isinstance(ds.column_names, list) else json.loads(ds.column_names))
                     cols_preview = ', '.join(cols[:10])
                     if len(cols) > 10:
                         cols_preview += "..."
