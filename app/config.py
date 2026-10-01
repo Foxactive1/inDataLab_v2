@@ -24,7 +24,11 @@ class Config:
     # =========================================================
     # Ambiente
     # =========================================================
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'sua-chave-jwt-muito-segura')
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or os.environ.get("SECRET_KEY", "indatalab-dev-only")
+    if os.getenv("FLASK_ENV") == "production" and (
+        not os.environ.get("JWT_SECRET_KEY") or not os.environ.get("SECRET_KEY")
+    ):
+        raise RuntimeError("JWT_SECRET_KEY e SECRET_KEY são obrigatórias em produção")
     FLASK_ENV = os.getenv("FLASK_ENV", "development")
 
     IS_PRODUCTION = FLASK_ENV == "production"
