@@ -25,7 +25,7 @@ with app.app_context():
         print(f"TABLE MISSING: {table}")
     for table in sorted(mapped & existing):
         columns = {column["name"] for column in inspector.get_columns(table)}
-        expected = set(db.metadata.tables[table].columns)
+        expected = {column.name for column in db.metadata.tables[table].columns}
         for column in sorted(expected - columns):
             print(f"COLUMN MISSING: {table}.{column}")
         for column in sorted(columns - expected):
