@@ -3,6 +3,9 @@ class NotebookManager {
         this.currentId  = null;
         this.page       = 1;
         this._loading   = false;
+        this._pendingPage = null;
+        this.searchTerm = '';
+        this._searchTimer = null;
 
         // Delegação de eventos — um único listener no container
         this._setupDelegation();
@@ -16,7 +19,23 @@ class NotebookManager {
         const list = document.getElementById('notebooksList');
         if (!list) return;
 
+        const searchInput = document.getElementById('notebookSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchTerm = searchInput.value.trim();
+            clearTimeout(this._searchTimer);
+            this._searchTimer = setTimeout(() => this.load(1), 250);
+        });
+
         list.addEventListener('click', (e) => {
+            const clearSearch = e.target.closest('[data-action="clear-search"]');
+            if (clearSearch) {
+                const input = document.getElementById('notebookSearch');
+                if (input) input.value = '';
+                this.searchTerm = '';
+                this.load(1);
+                return;
+            }
+
             // Botão editar
             const editBtn = e.target.closest('[data-action="edit"]');
             if (editBtn) {
@@ -55,14 +74,19 @@ class NotebookManager {
     // CARREGAR LISTA
     // ============================================================
     async load(page = 1) {
-        if (this._loading) return;
+        if (this._loading) {
+            this._pendingPage = page;
+            return;
+        }
         this._loading = true;
         this.page = page;
 
         this._setListLoading(true);
 
         try {
-            const data = await API.get(`/notebooks?page=${page}&per_page=8`);
+            const params = new URLSearchParams({ page: String(page), per_page: '8' });
+            if (this.searchTerm) params.set('q', this.searchTerm);
+            const data = await API.get(`/notebooks?${params.toString()}`);
             if (data.success) {
                 this.renderList(data.data.notebooks);
                 this.renderPagination(data.data.pagination);
@@ -74,6 +98,11 @@ class NotebookManager {
         } finally {
             this._loading = false;
             this._setListLoading(false);
+            if (this._pendingPage !== null) {
+                const nextPage = this._pendingPage;
+                this._pendingPage = null;
+                this.load(nextPage);
+            }
         }
     }
 
@@ -83,10 +112,17 @@ class NotebookManager {
     renderList(notebooks) {
         const container = document.getElementById('notebooksList');
 
+        container.__notebooks = notebooks || [];
+
         if (!notebooks || notebooks.length === 0) {
-            container.innerHTML = `
-                <div class="p-4 text-center text-muted">
-                    <i class="bi bi-journal-x fs-3 d-block mb-2"></i>
+            container.innerHTML = this.searchTerm
+                ? `<div class="p-3 text-center text-muted" role="status">
+                    <i class="bi bi-search fs-4 d-block mb-2" aria-hidden="true"></i>
+                    Nenhum notebook encontrado.<br>
+                    <button class="btn btn-link btn-sm" type="button" data-action="clear-search">Limpar busca</button>
+                </div>`
+                : `<div class="p-4 text-center text-muted" role="status">
+                    <i class="bi bi-journal-x fs-3 d-block mb-2" aria-hidden="true"></i>
                     Nenhum notebook criado.<br>
                     <small>Clique em <strong>+</strong> para começar.</small>
                 </div>`;
@@ -210,6 +246,8 @@ class NotebookManager {
             document.getElementById('selectedNotebookDesc').textContent  = nb.description || 'Sem descrição';
             document.getElementById('refreshCellsBtn').disabled = false;
             document.getElementById('addCellBtn').disabled      = false;
+            const datasetButton = document.getElementById('datasetUploadBtn');
+            if (datasetButton) datasetButton.disabled = false;
 
             // Recarrega lista para refletir item ativo
             this.renderList(
@@ -342,8 +380,10 @@ class NotebookManager {
         document.getElementById('selectedNotebookDesc').textContent  = '—';
         document.getElementById('refreshCellsBtn').disabled = true;
         document.getElementById('addCellBtn').disabled      = true;
+        const datasetButton = document.getElementById('datasetUploadBtn');
+        if (datasetButton) datasetButton.disabled = true;
         document.getElementById('cellsContainer').innerHTML =
-            '<div class="text-muted p-4 text-center">📓 Selecione ou crie um notebook para começar.</div>';
+            '<div class="workspace-empty" role="status"><i class="bi bi-journal-code" aria-hidden="true"></i><h4>Seu espaço de análise está pronto</h4><p>Selecione um notebook na lateral ou crie um novo para começar.</p></div>';
         document.getElementById('datasetsList').innerHTML =
             '<div class="text-muted small">Nenhum dataset carregado.</div>';
     }
