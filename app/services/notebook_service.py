@@ -75,7 +75,8 @@ class NotebookService:
         user_id: int,
         is_archived: Optional[bool] = None,
         page: int = 1,
-        per_page: int = 20
+        per_page: int = 20,
+        search: Optional[str] = None
     ) -> Tuple[List[Dict[str, Any]], int, int]:
         """
         Listar notebooks do usuário (paginado).
@@ -85,6 +86,11 @@ class NotebookService:
             query = Notebook.query.filter_by(user_id=user_id)
             if is_archived is not None:
                 query = query.filter_by(is_archived=is_archived)
+            if search:
+                pattern = f"%{search.strip()}%"
+                query = query.filter(
+                    Notebook.title.ilike(pattern) | Notebook.description.ilike(pattern)
+                )
             
             pagination = query.order_by(
                 Notebook.created_at.desc()

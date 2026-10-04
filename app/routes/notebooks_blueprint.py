@@ -149,6 +149,7 @@ def list_notebooks():
         user_id = get_current_user_id()
 
         page, per_page = parse_pagination()
+        search = (request.args.get('q') or '').strip()[:100] or None
 
         is_archived = parse_boolean_arg(
             'is_archived'
@@ -158,6 +159,7 @@ def list_notebooks():
             NotebookService.list_notebooks(
                 user_id=user_id,
                 is_archived=is_archived,
+                search=search,
                 page=page,
                 per_page=per_page
             )

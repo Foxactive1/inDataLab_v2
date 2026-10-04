@@ -16,16 +16,24 @@
 
 <div id="app">
     <!-- Sidebar esquerda -->
-    <aside id="notebooksSidebar">
+    <aside id="notebooksSidebar" aria-label="Navegação de notebooks">
         <div class="sidebar-header">
             <div class="logo"><i class="bi bi-lightning-fill"></i> InDataLab</div>
-            <button class="btn-close-sidebar d-lg-none" id="closeSidebarBtnMobile"><i class="bi bi-x-lg"></i></button>
+            <button class="btn-close-sidebar d-lg-none" id="closeSidebarBtnMobile" type="button" aria-label="Fechar navegação"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         </div>
         <div class="sidebar-toolbar">
             <h6><i class="bi bi-journal-bookmark-fill"></i> Notebooks</h6>
-            <button class="btn-new-notebook" onclick="app.notebook.openNewModal()"><i class="bi bi-plus-lg"></i></button>
+            <button class="btn-new-notebook" type="button" aria-label="Criar notebook" title="Criar notebook" onclick="app.notebook.openNewModal()"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
         </div>
-        <div id="notebooksListContainer" class="notebooks-scroll"><div id="notebooksList"></div></div>
+        <div class="sidebar-search">
+            <label for="notebookSearch" class="visually-hidden">Buscar notebooks</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-search"></i></span>
+                <input type="search" id="notebookSearch" class="form-control" placeholder="Buscar notebooks..." autocomplete="off" aria-controls="notebooksList">
+            </div>
+            <small class="search-hint">Busca por título ou descrição</small>
+        </div>
+        <div id="notebooksListContainer" class="notebooks-scroll"><div id="notebooksList" aria-live="polite"></div></div>
         <div class="sidebar-footer"><nav id="notebookPagination"></nav></div>
     </aside>
 
@@ -33,8 +41,8 @@
     <main id="mainWorkspace">
         <div class="top-bar">
             <div class="notebook-info">
-                <button id="toggleSidebarBtn" class="btn-toggle-sidebar d-none d-lg-block"><i class="bi bi-layout-sidebar"></i></button>
-                <button id="openSidebarMobileBtn" class="btn-toggle-sidebar d-lg-none"><i class="bi bi-list"></i></button>
+                <button id="toggleSidebarBtn" class="btn-toggle-sidebar d-none d-lg-block" type="button" aria-label="Recolher ou expandir lista de notebooks" title="Recolher ou expandir lista de notebooks"><i class="bi bi-layout-sidebar" aria-hidden="true"></i></button>
+                <button id="openSidebarMobileBtn" class="btn-toggle-sidebar d-lg-none" type="button" aria-label="Abrir lista de notebooks"><i class="bi bi-list" aria-hidden="true"></i></button>
                 <div>
                     <h3 id="selectedNotebookTitle">Selecione um notebook</h3>
                     <p id="selectedNotebookDesc">—</p>
@@ -47,11 +55,20 @@
                 </button>
                 <button class="btn-action" id="refreshCellsBtn" disabled><i class="bi bi-arrow-repeat"></i> Atualizar</button>
                 <button class="btn-action primary" id="addCellBtn" disabled><i class="bi bi-plus-circle"></i> Célula</button>
-                <button class="btn-action" data-bs-toggle="modal" data-bs-target="#datasetUploadModal"><i class="bi bi-upload"></i> Dataset</button>
+                <button class="btn-action" id="datasetUploadBtn" type="button" data-bs-toggle="modal" data-bs-target="#datasetUploadModal" disabled><i class="bi bi-upload" aria-hidden="true"></i> Dataset</button>
             </div>
         </div>
 
-        <div id="cellsContainer"></div>
+        <div id="cellsContainer" role="region" aria-label="Células do notebook" aria-live="polite">
+            <div class="workspace-empty" role="status">
+                <i class="bi bi-journal-code" aria-hidden="true"></i>
+                <h4>Seu espaço de análise está pronto</h4>
+                <p>Selecione um notebook na lateral ou crie um novo para começar a trabalhar com código, SQL, Markdown e IA.</p>
+                <button class="btn-action primary" type="button" onclick="app.notebook.openNewModal()">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> Criar notebook
+                </button>
+            </div>
+        </div>
 
         <div id="datasetsFooterContainer">
             <h6><i class="bi bi-database"></i> Datasets anexados</h6>
@@ -60,13 +77,14 @@
     </main>
 
     <!-- Painel direito (chat) -->
-    <aside id="rightPanel">
-        <div class="chat-header"><h6><i class="bi bi-robot"></i> Copilot</h6></div>
-        <div id="copilotMessages" class="chat-messages"><div class="msg-assistant">Olá! Posso ajudar com código, explicar células ou sugerir análises.</div></div>
+    <aside id="rightPanel" aria-label="Assistente Copilot">
+        <div class="chat-header"><h6><i class="bi bi-robot" aria-hidden="true"></i> Copilot</h6><small class="chat-context">As respostas consideram o notebook selecionado.</small></div>
+        <div id="copilotMessages" class="chat-messages" role="log" aria-label="Conversa com o Copilot" aria-live="polite" aria-relevant="additions text"><div class="msg-assistant">Olá! Posso ajudar com código, explicar células ou sugerir análises.</div></div>
         <div class="chat-input-area">
             <div class="input-group">
-                <input type="text" id="copilotInput" placeholder="Pergunte...">
-                <button id="copilotSendBtn"><i class="bi bi-send-fill"></i></button>
+                <label class="visually-hidden" for="copilotInput">Pergunte ao Copilot</label>
+                <input type="text" id="copilotInput" placeholder="Pergunte..." autocomplete="off">
+                <button id="copilotSendBtn" type="button" aria-label="Enviar mensagem"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
             </div>
             <button id="copilotClearBtn" class="btn-link-clear">Limpar histórico</button>
         </div>
@@ -74,7 +92,7 @@
 </div>
 
 <!-- Botão flutuante (mobile) -->
-<button id="fabChatBtn"><i class="bi bi-chat-dots-fill"></i></button>
+<button id="fabChatBtn" type="button" aria-label="Abrir Copilot"><i class="bi bi-chat-dots-fill" aria-hidden="true"></i></button>
 
 <!-- ========== MODAIS ========== -->
 
@@ -82,7 +100,7 @@
 <div class="modal fade" id="notebookModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Novo Notebook</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title">Novo Notebook</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
             <div class="modal-body">
                 <input type="hidden" id="notebookId">
                 <div class="mb-3"><label class="form-label">Título *</label><input type="text" id="notebookTitle" class="form-control"></div>
@@ -100,7 +118,7 @@
 <div class="modal fade" id="cellModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Célula</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title">Célula</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
             <div class="modal-body">
                 <input type="hidden" id="cellId">
                 <div class="mb-3"><label class="form-label">Tipo</label><select id="cellType" class="form-select"><option value="python">Python</option><option value="sql">SQL</option><option value="markdown">Markdown</option><option value="ai">IA (Groq)</option></select></div>
@@ -116,7 +134,7 @@
 <div class="modal fade" id="executionModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Resultado</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title">Resultado</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
             <div class="modal-body"><div id="execLogs" class="bg-dark text-white p-3" style="max-height: 500px; overflow: auto; font-family: monospace;"></div></div>
             <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button><button class="btn btn-success" id="runCellBtn">▶ Executar novamente</button></div>
         </div>
@@ -127,7 +145,7 @@
 <div class="modal fade" id="datasetUploadModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title">Importar Dataset</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title">Importar Dataset</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
             <div class="modal-body"><input type="file" id="datasetFile" class="form-control" accept=".csv,.txt,.xlsx,.json,.db"><div class="form-text mt-2">CSV, Excel, JSON ou SQLite (.db)</div></div>
             <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="app.dataset.upload()">Enviar</button></div>
         </div>
@@ -140,7 +158,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Prévia do Dataset</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body" id="previewModalBody" style="overflow-x: auto;"></div>
         </div>
@@ -151,10 +169,10 @@
 <div class="modal fade" id="chatMobileModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="bi bi-robot"></i> Assistente</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="bi bi-robot"></i> Assistente</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
             <div class="modal-body p-0"><div id="copilotMessagesMobile" class="chat-messages" style="height: 55vh;"><div class="msg-assistant">Olá! Posso ajudar.</div></div></div>
             <div class="modal-footer bg-light">
-                <div class="input-group w-100"><input type="text" id="copilotInputMobile" class="form-control rounded-pill"><button class="btn btn-primary rounded-pill ms-2" id="copilotSendMobileBtn"><i class="bi bi-send-fill"></i></button></div>
+                <div class="input-group w-100"><label class="visually-hidden" for="copilotInputMobile">Pergunte ao Copilot</label><input type="text" id="copilotInputMobile" class="form-control rounded-pill" placeholder="Pergunte..." autocomplete="off"><button class="btn btn-primary rounded-pill ms-2" id="copilotSendMobileBtn" type="button" aria-label="Enviar mensagem"><i class="bi bi-send-fill" aria-hidden="true"></i></button></div>
                 <button id="copilotClearMobileBtn" class="btn btn-sm btn-link text-muted mt-2 w-100">Limpar histórico</button>
             </div>
         </div>
