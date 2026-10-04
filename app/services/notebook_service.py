@@ -74,9 +74,9 @@ class NotebookService:
     def list_notebooks(
         user_id: int,
         is_archived: Optional[bool] = None,
-        search: Optional[str] = None,
         page: int = 1,
-        per_page: int = 20
+        per_page: int = 20,
+        search: Optional[str] = None
     ) -> Tuple[List[Dict[str, Any]], int, int]:
         """
         Listar notebooks do usuário (paginado).
