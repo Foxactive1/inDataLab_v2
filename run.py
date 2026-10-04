@@ -1,5 +1,5 @@
 """
-InDataLab - Run Script
+InDataLab - Run  Script
 Inicializa a aplicação Flask
 """
 
