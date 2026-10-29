@@ -451,6 +451,14 @@ InDataLab was designed to address these engineering challenges through a modular
 
 ---
 
+## 🚀 Deploy Vercel + Render
+
+O projeto possui uma estrutura de frontend estático em `frontend/` para Vercel e API Flask para Render. Consulte o [guia completo de implantação](DEPLOYMENT.md) para configurar Neon, CORS, variáveis de ambiente, persistência de uploads e homologação.
+
+> Em produção, a execução Python fica desabilitada até existir um sandbox isolado. Os arquivos enviados precisam de armazenamento persistente externo ou Persistent Disk no Render.
+
+---
+
 ## 🚀 Installation
 
 ### Prerequisites
