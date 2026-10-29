@@ -1,7 +1,7 @@
 class App {
     constructor() {
         if (!localStorage.getItem('access_token')) {
-            window.location.replace('/login.html');
+            window.location.replace('/login');
             return;
         }
         this.notebook = new NotebookManager();
