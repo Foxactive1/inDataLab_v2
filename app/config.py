@@ -53,7 +53,7 @@ class Config:
     INSTANCE_PATH = os.path.abspath(
         os.path.join(PROJECT_ROOT, "instance")
     )
-    UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, "uploads")
+    UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", os.path.join(PROJECT_ROOT, "uploads"))
 
     os.makedirs(INSTANCE_PATH, exist_ok=True)
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
