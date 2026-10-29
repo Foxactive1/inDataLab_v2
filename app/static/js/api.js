@@ -1,5 +1,5 @@
 class API {
-    static base = '/api';
+    static base = `${(window.INDATALAB_CONFIG?.API_URL || '').replace(/\/$/, '')}/api`;
     static TIMEOUT_MS = 30000; // 30s — ajuste conforme necessidade
 
     // ============================================================
