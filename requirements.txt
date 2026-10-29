@@ -1,5 +1,6 @@
 # Flask & Web
 Flask==3.0.0
+Flask-Cors>=4.0,<6
 Flask-SQLAlchemy==3.1.1
 Flask-Migrate>=4.0,<5
 Flask-JWT-Extended>=4.6,<5
@@ -25,3 +26,6 @@ bcrypt==4.1.1
 
 # Development
 python-dateutil==2.8.2
+
+# WSGI server (Render)
+gunicorn>=22.0,<24

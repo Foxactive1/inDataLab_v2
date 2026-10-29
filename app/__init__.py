@@ -9,6 +9,7 @@ from flask_jwt_extended import verify_jwt_in_request
 
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 
 from .config import Config, CURRENT_CONFIG
@@ -49,9 +50,26 @@ def create_app(config_class=CURRENT_CONFIG):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Inicializar JWT e Bcrypt
+    # Inicializar extensões de segurança e CORS para frontend hospedado no Vercel.
     JWTManager(app)
-    bcrypt = Bcrypt(app)
+    Bcrypt(app)
+
+    allowed_origins = [
+        origin.strip().rstrip("/")
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000"
+        ).split(",")
+        if origin.strip()
+    ]
+    CORS(
+        app,
+        resources={r"/*": {"origins": allowed_origins}},
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
+        supports_credentials=False,
+        max_age=600,
+    )
 
     # Registrar todos os modelos sem modificar o esquema Neon existente.
     from . import models  # noqa: F401
@@ -79,6 +97,9 @@ def create_app(config_class=CURRENT_CONFIG):
     # Rejeitar acesso anônimo antes dos handlers (incluindo Copilot e datasets).
     @app.before_request
     def require_api_auth():
+        # Preflight CORS não carrega JWT; deve chegar ao handler OPTIONS.
+        if request.method == "OPTIONS":
+            return None
         if request.path.startswith("/api/"):
             verify_jwt_in_request()
 

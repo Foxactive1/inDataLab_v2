@@ -1,0 +1,387 @@
+/* theme-styles.css - Estilos para tema claro e escuro */
+
+/* ============================================================
+   VARIÁVEIS CSS - TEMA CLARO
+   ============================================================ */
+:root,
+[data-bs-theme="light"],
+.light-theme {
+    /* Cores Primárias */
+    --color-primary: #0d6efd;
+    --color-primary-dark: #0b5ed7;
+    --color-primary-light: #31a3ff;
+    
+    /* Cores Secundárias */
+    --color-secondary: #6c757d;
+    --color-secondary-dark: #5c636a;
+    --color-secondary-light: #868e96;
+    
+    /* Backgrounds */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --bg-input: #ffffff;
+    
+    /* Texto */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #999999;
+    
+    /* Bordas */
+    --border-color: #dee2e6;
+    --border-light: #e9ecef;
+    
+    /* Elementos Específicos */
+    --card-bg: #ffffff;
+    --card-border: #dee2e6;
+    --modal-bg: #ffffff;
+    --navbar-bg: #ffffff;
+    --navbar-border: #dee2e6;
+    
+    /* Estados */
+    --hover-bg: #f0f1f3;
+    --active-bg: #e9ecef;
+    --focus-shadow: rgba(13, 110, 253, 0.25);
+    
+    /* Success, Warning, Danger */
+    --color-success: #198754;
+    --color-warning: #ffc107;
+    --color-danger: #dc3545;
+    --color-info: #0dcaf0;
+}
+
+/* ============================================================
+   VARIÁVEIS CSS - TEMA ESCURO
+   ============================================================ */
+[data-bs-theme="dark"],
+.dark-theme {
+    /* Cores Primárias */
+    --color-primary: #0d6efd;
+    --color-primary-dark: #0a58ca;
+    --color-primary-light: #6ea8ff;
+    
+    /* Cores Secundárias */
+    --color-secondary: #adb5bd;
+    --color-secondary-dark: #909599;
+    --color-secondary-light: #c3cad5;
+    
+    /* Backgrounds */
+    --bg-primary: #212529;
+    --bg-secondary: #343a40;
+    --bg-tertiary: #495057;
+    --bg-input: #495057;
+    
+    /* Texto */
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --text-muted: #6c757d;
+    
+    /* Bordas */
+    --border-color: #495057;
+    --border-light: #343a40;
+    
+    /* Elementos Específicos */
+    --card-bg: #343a40;
+    --card-border: #495057;
+    --modal-bg: #343a40;
+    --navbar-bg: #212529;
+    --navbar-border: #495057;
+    
+    /* Estados */
+    --hover-bg: #495057;
+    --active-bg: #555d63;
+    --focus-shadow: rgba(13, 110, 253, 0.5);
+    
+    /* Success, Warning, Danger */
+    --color-success: #51cf66;
+    --color-warning: #ffd43b;
+    --color-danger: #ff6b6b;
+    --color-info: #4dabf7;
+}
+
+/* ============================================================
+   APLICAR VARIÁVEIS AO BODY
+   ============================================================ */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================================
+   ELEMENTOS GERAIS
+   ============================================================ */
+
+/* Cards */
+.card {
+    background-color: var(--card-bg);
+    border-color: var(--card-border);
+    color: var(--text-primary);
+}
+
+.card-body {
+    color: var(--text-primary);
+}
+
+.card-header {
+    background-color: var(--bg-secondary);
+    border-color: var(--card-border);
+    color: var(--text-primary);
+}
+
+/* Inputs */
+.form-control,
+.form-select,
+textarea {
+    background-color: var(--bg-input);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+    background-color: var(--bg-input);
+    border-color: var(--color-primary);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.25rem var(--focus-shadow);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+/* Modals */
+.modal-content {
+    background-color: var(--modal-bg);
+    border-color: var(--border-color);
+}
+
+.modal-header {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    color: var(--text-primary);
+}
+
+.modal-footer {
+    border-color: var(--border-color);
+}
+
+/* Navbar */
+.navbar {
+    background-color: var(--navbar-bg);
+    border-color: var(--navbar-border);
+}
+
+.navbar-light .navbar-brand {
+    color: var(--text-primary);
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: var(--text-secondary);
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--text-primary);
+}
+
+/* Tabelas */
+.table {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--bg-secondary);
+}
+
+.table thead {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.table-light {
+    background-color: var(--bg-secondary) !important;
+}
+
+.table-dark {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Botões */
+.btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+/* Badges e Pills */
+.badge {
+    background-color: var(--color-primary);
+}
+
+.badge-secondary {
+    background-color: var(--color-secondary);
+}
+
+/* Alerts */
+.alert-light {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.alert-dark {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Dividers */
+hr {
+    border-color: var(--border-color);
+    opacity: 1;
+}
+
+/* Links */
+a {
+    color: var(--color-primary);
+}
+
+a:hover {
+    color: var(--color-primary-dark);
+}
+
+/* Scrollbar (Webkit) */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ============================================================
+   BOTÃO DE ALTERNÂNCIA DE TEMA
+   ============================================================ */
+
+#themeToggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+#themeToggleBtn:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--text-secondary);
+}
+
+#themeToggleBtn i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+#themeToggleBtn:hover i {
+    transform: rotate(20deg);
+}
+
+.theme-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   ESTILOS ESPECÍFICOS DO MODAL DE INSPEÇÃO SQL
+   ============================================================ */
+
+.modal-body .card {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.modal-body .card-body {
+    background-color: transparent;
+}
+
+.modal-body .fw-bold {
+    color: var(--text-primary);
+}
+
+.modal-body .text-muted {
+    color: var(--text-muted);
+}
+
+.modal-body .text-center .fs-3 {
+    color: var(--text-primary);
+}
+
+/* Dataset Items */
+.dataset-item {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background-color: var(--bg-secondary);
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.dataset-item:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--color-primary);
+}
+
+/* Table columns highlight */
+.table-light td,
+.table-light th {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ============================================================
+   TRANSIÇÕES SUAVES
+   ============================================================ */
+
+* {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Desabilita transição para elementos que não precisam */
+input,
+textarea,
+select {
+    transition: none !important;
+}
