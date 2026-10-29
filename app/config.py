@@ -153,8 +153,10 @@ class Config:
     # Executor / Kernels
     # =========================================================
 
+    # Execução Python arbitrária permanece desabilitada em produção até haver sandbox.
     ENABLE_KERNELS = (
-        os.getenv("ENABLE_KERNELS", "true").lower() == "true"
+        os.getenv("ENABLE_KERNELS", "false" if IS_PRODUCTION else "true").lower()
+        in {"1", "true", "yes", "on"}
     )
 
     # =========================================================
