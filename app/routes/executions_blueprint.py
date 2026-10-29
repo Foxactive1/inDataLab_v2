@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 from sqlalchemy.orm import joinedload
 
 from app.models.cell import Cell
@@ -99,6 +99,13 @@ def execute_cell(cell_id):
         # ==================================================
         # EXECUÇÃO
         # ==================================================
+
+        if cell.cell_type == "python" and not current_app.config.get("ENABLE_KERNELS", True):
+            return error_response(
+                "Execução Python está temporariamente desabilitada neste ambiente. "
+                "Ela será reativada após a implantação de um sandbox isolado.",
+                503
+            )
 
         logger.info(
             f"[EXECUTION] user={user_id} "
