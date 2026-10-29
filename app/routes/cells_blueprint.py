@@ -3,7 +3,7 @@ Blueprint: Cells
 Rotas CRUD para células dentro de notebooks (suporte a python, sql, markdown, ai)
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 
 from app.services.cell_service import CellService
 from app.utils import APIResponse, ValidateRequest, serialize_model, serialize_models
@@ -240,6 +240,16 @@ def execute_cell_via_notebook(notebook_id, cell_id):
             resp, code = APIResponse.not_found("Célula")
             return jsonify(resp), code
         
+        # Impedir execução de Python arbitrário em produção até existir sandbox isolado.
+        if cell.cell_type == "python" and not current_app.config.get("ENABLE_KERNELS", True):
+            return jsonify({
+                "success": False,
+                "error": (
+                    "Execução Python está temporariamente desabilitada neste ambiente. "
+                    "Ela será reativada após a implantação de um sandbox isolado."
+                )
+            }), 503
+
         # Executar
         start_time = time.time()
         result = CellExecutionService.execute_cell(cell)
