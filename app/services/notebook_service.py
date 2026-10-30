@@ -187,6 +187,10 @@ class NotebookService:
                 return False, "Notebook não encontrado"
             if notebook.user_id != user_id:
                 return False, "Sem permissão"
+            # Encerrar a microVM remota antes de remover o notebook.
+            from app.executor.e2b_sandbox_service import E2BPythonSandboxService
+            E2BPythonSandboxService.close_notebook_sandbox(notebook)
+
             db.session.delete(notebook)
             db.session.commit()
             return True, None
