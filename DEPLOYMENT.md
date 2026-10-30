@@ -40,6 +40,7 @@ O script de criação do schema está versionado em [`database/neon_schema.sql`]
 | `E2B_SANDBOX_TIMEOUT` | `3600` (até 1 hora por sessão) |
 | `E2B_EXECUTION_TIMEOUT` | `30` segundos por célula |
 | `E2B_MAX_DATASET_BYTES` | `26214400` (25 MiB por arquivo sincronizado) |
+| `E2B_MAX_OUTPUT_CHARS` | `256000` (limite aproximado de saída por célula) |
 | `ENABLE_KERNELS` | `false` até concluir a configuração do E2B; depois `true` |
 
 Exemplo de `CORS_ORIGINS`: `https://SEU-PROJETO.vercel.app,https://seudominio.com.br`. Informe somente as origens reais, sem barra no final. Inclua domínio de produção e domínio customizado, se houver.
@@ -50,13 +51,13 @@ O arquivo `render.yaml` já descreve o serviço e gera os dois segredos automati
 
 1. Crie uma conta no [E2B](https://e2b.dev/) e gere uma API key no dashboard.
 2. Cadastre essa chave no Render como `E2B_API_KEY`. Nunca coloque essa chave no frontend, no GitHub ou em células do notebook.
-3. Antes de habilitar Python, execute no Neon o script incremental [`database/migrations/20261030_add_e2b_sandbox_fields.sql`](database/migrations/20261030_add_e2b_sandbox_fields.sql). Ele adiciona ao notebook os campos usados para persistir a sessão remota.
+3. Antes de habilitar Python, execute no Neon o script incremental [`database/migrations/20261029_add_e2b_sandbox_fields.sql`](database/migrations/20261029_add_e2b_sandbox_fields.sql). Ele adiciona ao notebook os campos usados para persistir a sessão remota.
 4. Confirme que `E2B_SANDBOX_TIMEOUT=3600` e `E2B_EXECUTION_TIMEOUT=30` estão cadastrados.
 5. Somente depois disso, altere `ENABLE_KERNELS` para `true` no Render e faça um novo deploy.
 
-Cada notebook recebe uma sessão E2B persistente e isolada em microVM. O SDK é configurado com `secure=True` e `allow_internet_access=False`; a chave E2B permanece no backend e não é enviada à máquina de execução. As sessões expiram automaticamente após o prazo configurado (padrão de 1 hora); quando expiram, o próximo uso cria outra sessão e as variáveis em memória da sessão anterior não são preservadas.
+Cada notebook recebe uma sessão E2B persistente e isolada em microVM. O SDK usa o acesso seguro padrão e `allow_internet_access=False`; a chave E2B permanece no backend e não é enviada à máquina de execução. As sessões expiram automaticamente após o prazo configurado (padrão de 1 hora); quando expiram, o próximo uso cria outra sessão e as variáveis em memória da sessão anterior não são preservadas.
 
-Os datasets anexados ao notebook são copiados para o sandbox antes da execução, para que o dicionário `_datasets` continue disponível. O tamanho máximo de cada arquivo sincronizado é 25 MiB. O armazenamento local do Render ainda precisa de Persistent Disk ou object storage para que uploads sobrevivam a reinicializações.
+Os datasets anexados ao notebook são copiados para o sandbox antes da execução, para que o dicionário `_datasets` continue disponível. O tamanho máximo de cada arquivo sincronizado é 25 MiB. O armazenamento local do Render ainda precisa de Persistent Disk ou object storage para que uploads sobrevivam a reinicializações. O serviço atual usa um lock por notebook dentro de cada worker; mantenha o Render com um worker até adicionar um mecanismo de lock distribuído para escalar horizontalmente.
 
 Depois do deploy, teste `https://SUA-API.onrender.com/health`. Deve retornar JSON com `status: healthy`.
 
@@ -89,6 +90,9 @@ O frontend usa `index.html` como entrada e `login.html` para autenticação. Nã
 - [ ] CORS permite o domínio Vercel e bloqueia origens não autorizadas.
 - [ ] CRUD de notebooks/células e Copilot são validados.
 - [ ] Upload e persistência são validados após configurar armazenamento persistente.
-- [ ] Execução Python retorna 503 enquanto não existir sandbox.
+- [ ] Execução Python permanece bloqueada até a API key E2B e a migração Neon estarem configuradas.
+- [ ] Com E2B habilitado, executar `print("InDataLab sandbox OK")`.
+- [ ] Executar duas células em sequência e verificar se a segunda reutiliza uma variável criada na primeira.
+- [ ] Verificar que acesso à internet a partir do sandbox está bloqueado.
 
 Este guia prepara a estrutura de deploy; não substitui a execução dos testes nem a configuração das contas Render, Vercel e Neon.
