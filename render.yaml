@@ -27,5 +27,7 @@ services:
         value: "30"
       - key: E2B_MAX_DATASET_BYTES
         value: "26214400"
+      - key: E2B_MAX_OUTPUT_CHARS
+        value: "256000"
       - key: ENABLE_KERNELS
         value: "false"
