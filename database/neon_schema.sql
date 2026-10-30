@@ -108,8 +108,7 @@ CREATE INDEX IF NOT EXISTS ix_notebooks_user_id
 CREATE INDEX IF NOT EXISTS ix_notebooks_is_public
     ON notebooks (is_public);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_notebooks_e2b_sandbox_id
-    ON notebooks (e2b_sandbox_id)
-    WHERE e2b_sandbox_id IS NOT NULL;
+    ON notebooks (e2b_sandbox_id);
 
 -- ------------------------------------------------------------
 -- 3. DATASETS
