@@ -30,7 +30,7 @@ class Notebook(db.Model):
     default_sql_connection = db.Column(db.String(500), nullable=True, comment="Caminho do banco SQL padrão")
 
     # Identificador remoto do sandbox E2B. Nunca serializar em to_dict().
-    e2b_sandbox_id = db.Column(db.String(120), nullable=True, unique=True)
+    e2b_sandbox_id = db.Column(db.String(120), nullable=True)
     e2b_sandbox_expires_at = db.Column(db.DateTime, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
