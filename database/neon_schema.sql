@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS notebooks (
     is_archived             BOOLEAN DEFAULT FALSE,
     kernel_type             kerneltype NOT NULL DEFAULT 'PYTHON3',
     default_sql_connection  VARCHAR(500),
+    e2b_sandbox_id           VARCHAR(120),
+    e2b_sandbox_expires_at   TIMESTAMP WITHOUT TIME ZONE,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -105,6 +107,9 @@ CREATE INDEX IF NOT EXISTS ix_notebooks_user_id
     ON notebooks (user_id);
 CREATE INDEX IF NOT EXISTS ix_notebooks_is_public
     ON notebooks (is_public);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_notebooks_e2b_sandbox_id
+    ON notebooks (e2b_sandbox_id)
+    WHERE e2b_sandbox_id IS NOT NULL;
 
 -- ------------------------------------------------------------
 -- 3. DATASETS
