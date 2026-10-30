@@ -47,7 +47,7 @@ if __name__ == '__main__':
     print(f"""
     
     ╔═══════════════════════════════════╗
-    ║    InDataLab - ETAPA 3 - MVP      ║
+    ║    InDataLab - ETAPA 3            ║
     ║    Backend Consolidado            ║
     ╚═══════════════════════════════════╝
     
