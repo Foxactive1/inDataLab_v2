@@ -25,6 +25,16 @@ class PythonRuntime(BaseRuntime):
     def execute(self, cell):
         started_at = time.perf_counter()
 
+        if not current_app.config.get("ENABLE_KERNELS", False):
+            return {
+                "success": False,
+                "error": (
+                    "Execução Python desabilitada. Configure E2B_API_KEY, aplique "
+                    "a migração Neon do sandbox e defina ENABLE_KERNELS=true no Render."
+                ),
+                "execution_time": time.perf_counter() - started_at,
+            }
+
         # Em desenvolvimento local, preserva o fluxo anterior para facilitar
         # a edição do projeto sem exigir conta/chave E2B.
         if (
