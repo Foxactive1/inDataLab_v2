@@ -10,6 +10,7 @@ from typing import Dict, Any, List, Optional
 
 from app.executor.runtimes.base import BaseRuntime
 from app.services.ai_service import AIService
+from flask import current_app
 from app.executor.e2b_sandbox_service import E2BPythonSandboxService
 from app.models.cell import Cell
 from app.models.notebook import Notebook
@@ -143,13 +144,40 @@ class AIRuntime(BaseRuntime):
 
     def _get_kernel_variables(self, notebook_id: int) -> List[Dict]:
         """
-        Consulta metadados de variáveis na sessão Python remota do notebook.
-        O sandbox retorna somente nomes, tipos e amostras pequenas de DataFrames.
+        Consulta as variáveis do sandbox remoto em produção.
+        Em desenvolvimento local, mantém compatibilidade com o kernel legado.
         """
         try:
+            if (
+                not current_app.config.get("IS_PRODUCTION", False)
+                and not current_app.config.get("E2B_API_KEY")
+            ):
+                from app.executor.kernel_manager import (
+                    get_session,
+                    list_session_variables,
+                )
+
+                var_summary = list_session_variables(notebook_id)
+                namespace = get_session(notebook_id)
+                variables = []
+                for name, type_name in var_summary.items():
+                    var_info = {"name": name, "type": type_name}
+                    if type_name == "DataFrame" and name in namespace:
+                        dataframe = namespace[name]
+                        try:
+                            var_info["columns"] = list(dataframe.columns)[:20]
+                            var_info["preview"] = dataframe.head(
+                                self.DATAFRAME_PREVIEW_ROWS
+                            ).to_dict(orient="records")
+                            var_info["shape"] = list(dataframe.shape)
+                        except Exception:
+                            pass
+                    variables.append(var_info)
+                return variables
+
             return E2BPythonSandboxService.get_variables(notebook_id)
         except Exception as exc:
-            return [{"error": f"Erro ao consultar sandbox: {str(exc)}"}]
+            return [{"error": f"Erro ao consultar variáveis Python: {str(exc)}"}]
 
     def _get_recent_cells(self, notebook_id: int, user_id: int) -> List[Dict]:
         """
