@@ -10,7 +10,8 @@ from typing import Dict, Any, List, Optional
 
 from app.executor.runtimes.base import BaseRuntime
 from app.services.ai_service import AIService
-from app.executor.kernel_manager import get_session, list_session_variables
+from flask import current_app
+from app.executor.e2b_sandbox_service import E2BPythonSandboxService
 from app.models.cell import Cell
 from app.models.notebook import Notebook
 from app.models.dataset import Dataset
@@ -143,31 +144,40 @@ class AIRuntime(BaseRuntime):
 
     def _get_kernel_variables(self, notebook_id: int) -> List[Dict]:
         """
-        Obtém variáveis do kernel via kernel_manager.
-        Para DataFrames, inclui colunas e amostra (2 primeiras linhas).
+        Consulta as variáveis do sandbox remoto em produção.
+        Em desenvolvimento local, mantém compatibilidade com o kernel legado.
         """
         try:
-            var_summary = list_session_variables(notebook_id)  # nome -> tipo
-            namespace = get_session(notebook_id)
-            variables = []
-            for name, type_name in var_summary.items():
-                var_info = {"name": name, "type": type_name}
-                # Se for DataFrame, extrai schema
-                if type_name == "DataFrame" and name in namespace:
-                    df = namespace[name]
-                    try:
-                        # Colunas
-                        var_info["columns"] = list(df.columns)[:20]
-                        # Amostra (primeiras 2 linhas como dicionário)
-                        preview = df.head(self.DATAFRAME_PREVIEW_ROWS).to_dict(orient="records")
-                        var_info["preview"] = preview
-                        var_info["shape"] = df.shape
-                    except Exception:
-                        pass
-                variables.append(var_info)
-            return variables
-        except Exception as e:
-            return [{"error": f"Erro ao acessar kernel: {str(e)}"}]
+            if (
+                not current_app.config.get("IS_PRODUCTION", False)
+                and not current_app.config.get("E2B_API_KEY")
+            ):
+                from app.executor.kernel_manager import (
+                    get_session,
+                    list_session_variables,
+                )
+
+                var_summary = list_session_variables(notebook_id)
+                namespace = get_session(notebook_id)
+                variables = []
+                for name, type_name in var_summary.items():
+                    var_info = {"name": name, "type": type_name}
+                    if type_name == "DataFrame" and name in namespace:
+                        dataframe = namespace[name]
+                        try:
+                            var_info["columns"] = list(dataframe.columns)[:20]
+                            var_info["preview"] = dataframe.head(
+                                self.DATAFRAME_PREVIEW_ROWS
+                            ).to_dict(orient="records")
+                            var_info["shape"] = list(dataframe.shape)
+                        except Exception:
+                            pass
+                    variables.append(var_info)
+                return variables
+
+            return E2BPythonSandboxService.get_variables(notebook_id)
+        except Exception as exc:
+            return [{"error": f"Erro ao consultar variáveis Python: {str(exc)}"}]
 
     def _get_recent_cells(self, notebook_id: int, user_id: int) -> List[Dict]:
         """

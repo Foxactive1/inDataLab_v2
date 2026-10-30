@@ -33,6 +33,9 @@ matplotlib>=3.8,<4
 
 # Inteligência Artificial / Groq
 groq==0.4.2
+
+# Execução Python isolada (E2B Code Interpreter)
+e2b-code-interpreter>=2.11.3,<3
 tiktoken>=0.7,<1
 
 # Resiliência, métricas e monitoramento

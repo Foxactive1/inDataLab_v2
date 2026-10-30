@@ -159,10 +159,7 @@ class CellExecutionService:
                 cell_id=cell.id,
                 status=cell.status,
                 logs=str(
-                    result.get(
-                        "output",
-                        ""
-                    )
+                    result.get("logs") or result.get("output", "")
                 ),
                 error_message=str(
                     result.get(

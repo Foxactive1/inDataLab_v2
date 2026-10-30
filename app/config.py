@@ -160,6 +160,23 @@ class Config:
     )
 
     # =========================================================
+    # Execução Python isolada (E2B)
+    # =========================================================
+
+    E2B_API_KEY = os.getenv("E2B_API_KEY", "")
+    E2B_SANDBOX_TIMEOUT = int(os.getenv("E2B_SANDBOX_TIMEOUT", "3600"))
+    E2B_EXECUTION_TIMEOUT = int(os.getenv("E2B_EXECUTION_TIMEOUT", "30"))
+    E2B_MAX_DATASET_BYTES = int(os.getenv("E2B_MAX_DATASET_BYTES", str(25 * 1024 * 1024)))
+    E2B_MAX_OUTPUT_CHARS = int(os.getenv("E2B_MAX_OUTPUT_CHARS", str(250 * 1024)))
+
+    if not 300 <= E2B_SANDBOX_TIMEOUT <= 3600:
+        raise RuntimeError("E2B_SANDBOX_TIMEOUT deve estar entre 300 e 3600 segundos")
+    if not 1 <= E2B_EXECUTION_TIMEOUT <= 120:
+        raise RuntimeError("E2B_EXECUTION_TIMEOUT deve estar entre 1 e 120 segundos")
+    if E2B_MAX_DATASET_BYTES <= 0:
+        raise RuntimeError("E2B_MAX_DATASET_BYTES deve ser positivo")
+
+    # =========================================================
     # Performance
     # =========================================================
 

@@ -240,13 +240,13 @@ def execute_cell_via_notebook(notebook_id, cell_id):
             resp, code = APIResponse.not_found("Célula")
             return jsonify(resp), code
         
-        # Impedir execução de Python arbitrário em produção até existir sandbox isolado.
+        # Exige o sandbox externo (E2B) habilitado no backend.
         if cell.cell_type == "python" and not current_app.config.get("ENABLE_KERNELS", True):
             return jsonify({
                 "success": False,
                 "error": (
-                    "Execução Python está temporariamente desabilitada neste ambiente. "
-                    "Ela será reativada após a implantação de um sandbox isolado."
+                    "Execução Python desabilitada. Configure E2B_API_KEY, aplique "
+                    "a migração Neon do sandbox e defina ENABLE_KERNELS=true no Render."
                 )
             }), 503
 

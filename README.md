@@ -451,7 +451,7 @@ InDataLab was designed to address these engineering challenges through a modular
 
 ---
 
-## 🚀 Deploy Vercel + Render
+## 🧪 Execução Python isolada (E2B)\n\nAs células Python usam o E2B Code Interpreter em microVMs remotas, com uma sessão por notebook. Configure `E2B_API_KEY` no Render, aplique a migração `database/migrations/20261030_add_e2b_sandbox_fields.sql` no Neon e só então ative `ENABLE_KERNELS=true`. Consulte `DEPLOYMENT.md`.\n\n---\n\n## 🚀 Deploy Vercel + Render
 
 O projeto possui uma estrutura de frontend estático em `frontend/` para Vercel e API Flask para Render. Consulte o [guia completo de implantação](DEPLOYMENT.md) para configurar Neon, CORS, variáveis de ambiente, persistência de uploads e homologação.
 

@@ -102,8 +102,7 @@ def execute_cell(cell_id):
 
         if cell.cell_type == "python" and not current_app.config.get("ENABLE_KERNELS", True):
             return error_response(
-                "Execução Python está temporariamente desabilitada neste ambiente. "
-                "Ela será reativada após a implantação de um sandbox isolado.",
+                "Execução Python desabilitada. Configure E2B_API_KEY e ENABLE_KERNELS=true no Render após aplicar a migração Neon.",
                 503
             )
 

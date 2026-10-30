@@ -1,13 +1,9 @@
 """
-Python Runtime - Executa células Python do InDataLab.
+Python Runtime do InDataLab.
 
-Suporta:
-- Python puro
-- Pandas DataFrame
-- Plotly
-- Matplotlib
-- stdout (print)
-- Captura da última expressão estilo Jupyter
+Em produção, toda célula Python é executada no E2B Code Interpreter,
+em uma microVM isolada do processo Flask. O runtime local antigo fica
+disponível somente para desenvolvimento local sem E2B configurado.
 """
 
 import io
@@ -16,27 +12,61 @@ import base64
 import traceback
 
 import pandas as pd
+from flask import current_app
 
 from app.executor.runtimes.base import BaseRuntime
-from app.executor.kernel_manager import (
-    refresh_datasets_in_session,
-    execute_code,
-)
+from app.executor.e2b_sandbox_service import E2BPythonSandboxService
 from app.utils.json_utils import sanitize_json
 
 
 class PythonRuntime(BaseRuntime):
-    """
-    Runtime Python com comportamento semelhante ao Jupyter Notebook.
-    """
+    """Runtime Python com sessão persistente por notebook."""
 
     def execute(self, cell):
         started_at = time.perf_counter()
 
-        try:
-            notebook_id = cell.notebook_id
+        if not current_app.config.get("ENABLE_KERNELS", False):
+            return {
+                "success": False,
+                "error": (
+                    "Execução Python desabilitada. Configure E2B_API_KEY, aplique "
+                    "a migração Neon do sandbox e defina ENABLE_KERNELS=true no Render."
+                ),
+                "execution_time": time.perf_counter() - started_at,
+            }
 
-            # Atualiza _datasets
+        # Em desenvolvimento local, preserva o fluxo anterior para facilitar
+        # a edição do projeto sem exigir conta/chave E2B.
+        if (
+            not current_app.config.get("IS_PRODUCTION", False)
+            and not current_app.config.get("E2B_API_KEY")
+        ):
+            return self._execute_local_development(cell, started_at)
+
+        if not current_app.config.get("E2B_API_KEY"):
+            return {
+                "success": False,
+                "error": (
+                    "Sandbox Python não configurado: cadastre E2B_API_KEY "
+                    "no ambiente do backend e habilite ENABLE_KERNELS."
+                ),
+                "execution_time": time.perf_counter() - started_at,
+            }
+
+        return E2BPythonSandboxService.execute(
+            notebook_id=cell.notebook_id,
+            code=cell.content,
+        )
+
+    def _execute_local_development(self, cell, started_at):
+        """Fallback restrito a ambiente de desenvolvimento local."""
+        try:
+            from app.executor.kernel_manager import (
+                refresh_datasets_in_session,
+                execute_code,
+            )
+
+            notebook_id = cell.notebook_id
             refresh_datasets_in_session(notebook_id)
 
             success, exec_result = execute_code(
@@ -48,27 +78,20 @@ class PythonRuntime(BaseRuntime):
             if not success:
                 return {
                     "success": False,
-                    "error": exec_result.get(
-                        "error_message",
-                        "Erro desconhecido"
-                    ),
+                    "error": exec_result.get("error_message", "Erro desconhecido"),
                     "execution_time": exec_result.get(
-                        "execution_time",
-                        0
+                        "execution_time", time.perf_counter() - started_at
                     ),
                 }
 
             logs = exec_result.get("logs", "")
             last = exec_result.get("last_expression")
-            execution_time = exec_result.get("execution_time", 0)
-
-            # =====================================================
-            # DATAFRAME
-            # =====================================================
+            execution_time = exec_result.get(
+                "execution_time", time.perf_counter() - started_at
+            )
 
             if isinstance(last, pd.DataFrame):
                 df_clean = last.where(pd.notnull(last), None)
-
                 return {
                     "success": True,
                     "output": df_clean.to_string(index=False),
@@ -78,99 +101,58 @@ class PythonRuntime(BaseRuntime):
                     "rows_returned": len(df_clean),
                     "output_type": "table",
                     "execution_time": execution_time,
+                    "logs": logs,
                 }
-
-            # =====================================================
-            # PLOTLY
-            # =====================================================
 
             try:
                 from plotly.basedatatypes import BaseFigure
-
                 if isinstance(last, BaseFigure):
-
-                    html = last.to_html(
-                        full_html=False,
-                        include_plotlyjs="cdn"
-                    )
-
                     return {
                         "success": True,
-                        "output": html,
+                        "output": last.to_html(
+                            full_html=False,
+                            include_plotlyjs="cdn",
+                        ),
                         "output_type": "html",
                         "execution_time": execution_time,
+                        "logs": logs,
                     }
-
             except Exception:
                 pass
-
-            # =====================================================
-            # MATPLOTLIB
-            # =====================================================
 
             try:
                 from matplotlib.figure import Figure
-
                 if isinstance(last, Figure):
-
                     buffer = io.BytesIO()
-
-                    last.savefig(
-                        buffer,
-                        format="png",
-                        bbox_inches="tight"
-                    )
-
+                    last.savefig(buffer, format="png", bbox_inches="tight")
                     buffer.seek(0)
-
                     image_base64 = base64.b64encode(
                         buffer.read()
-                    ).decode("utf-8")
-
-                    html = (
-                        f'<img src="data:image/png;base64,{image_base64}" '
-                        f'class="img-fluid">'
-                    )
-
+                    ).decode("ascii")
                     return {
                         "success": True,
-                        "output": html,
+                        "output": (
+                            f'<img src="data:image/png;base64,{image_base64}" '
+                            'class="img-fluid">'
+                        ),
                         "output_type": "html",
                         "execution_time": execution_time,
+                        "logs": logs,
                     }
-
             except Exception:
                 pass
 
-            # =====================================================
-            # OUTROS OBJETOS
-            # =====================================================
-
-            if last is not None:
-
-                return {
-                    "success": True,
-                    "output": repr(last),
-                    "output_type": "text",
-                    "execution_time": execution_time,
-                }
-
-            # =====================================================
-            # PRINTS / LOGS
-            # =====================================================
-
             return {
                 "success": True,
-                "output": logs,
+                "output": repr(last) if last is not None else logs,
                 "output_type": "text",
                 "execution_time": execution_time,
+                "logs": logs,
             }
 
         except Exception:
-
             return {
                 "success": False,
                 "error": traceback.format_exc(),
-                "execution_time":
-                    time.perf_counter() - started_at,
+                "execution_time": time.perf_counter() - started_at,
             }
