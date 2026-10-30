@@ -71,13 +71,21 @@ class E2BPythonSandboxService:
     @staticmethod
     def _sdk():
         try:
-            from e2b import NotFoundException, SandboxNotFoundException
+            from e2b import (
+                NotFoundException,
+                SandboxNotFoundException,
+                SandboxNotRunningException,
+            )
             from e2b_code_interpreter import Sandbox
         except ImportError as exc:
             raise RuntimeError(
                 "SDK E2B não instalado. Instale e2b-code-interpreter."
             ) from exc
-        return Sandbox, (NotFoundException, SandboxNotFoundException)
+        return Sandbox, (
+            NotFoundException,
+            SandboxNotFoundException,
+            SandboxNotRunningException,
+        )
 
     @staticmethod
     def _get_or_create_sandbox(notebook: Notebook):
