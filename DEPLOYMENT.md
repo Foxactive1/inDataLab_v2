@@ -9,6 +9,18 @@ Esta configuração separa o frontend estático (Vercel) da API Flask (Render). 
 3. Não publique essa URL no GitHub. Ela será cadastrada como `DATABASE_URL` no Render.
 4. Antes do primeiro acesso, confirme que o schema/tabelas existentes no Neon correspondem aos modelos em `app/models`. Este repositório ainda não contém uma pasta `migrations/` versionada; portanto, não presuma que `flask db upgrade` esteja pronto para criar o schema.
 
+## 1.1 Criar as tabelas no Neon
+
+O script de criação do schema está versionado em [`database/neon_schema.sql`](database/neon_schema.sql). Para um banco Neon novo e vazio:
+
+1. Abra o projeto Neon e entre no **SQL Editor**.
+2. Selecione o banco correto e o schema `public`.
+3. Abra `database/neon_schema.sql` no GitHub, copie o conteúdo completo e cole no SQL Editor.
+4. Execute o script inteiro em uma única execução.
+5. Confira a consulta final do script: ela deve listar as 11 tabelas do InDataLab.
+
+**Não execute cegamente em um banco que já contenha dados ou tabelas do InDataLab.** O script usa `CREATE TABLE IF NOT EXISTS`: ele cria tabelas ausentes, mas não altera colunas ou constraints de tabelas existentes. Faça backup e compare o schema atual antes de aplicar em ambiente existente.
+
 ## 2. Backend no Render
 
 1. No Render, escolha **New → Blueprint** e conecte este repositório, ou crie um **Web Service** manualmente.
