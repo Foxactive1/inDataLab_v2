@@ -96,6 +96,7 @@ class E2BPythonSandboxService:
                 sandbox = Sandbox.connect(
                     notebook.e2b_sandbox_id,
                     timeout=ttl,
+                    api_key=api_key,
                 )
                 if sandbox.is_running():
                     sandbox.set_timeout(ttl)
@@ -117,7 +118,7 @@ class E2BPythonSandboxService:
 
         sandbox = Sandbox.create(
             timeout=ttl,
-            secure=True,
+            api_key=api_key,
             allow_internet_access=False,
             metadata={
                 "application": "indatalab",
@@ -297,10 +298,15 @@ class E2BPythonSandboxService:
             result["output_type"] = "text"
 
         if primary.data is not None and isinstance(primary.data, (list, dict)):
-            result["output_json"] = sanitize_json(primary.data)
-            result["rows_returned"] = (
-                len(primary.data) if isinstance(primary.data, list) else None
+            safe_data = sanitize_json(primary.data)
+            encoded_data = json.dumps(
+                safe_data, ensure_ascii=False, default=str
             )
+            if len(encoded_data) <= max_output:
+                result["output_json"] = safe_data
+                result["rows_returned"] = (
+                    len(safe_data) if isinstance(safe_data, list) else None
+                )
 
         return result
 
@@ -368,6 +374,7 @@ class E2BPythonSandboxService:
                 sandbox = Sandbox.connect(
                     notebook.e2b_sandbox_id,
                     timeout=int(current_app.config["E2B_SANDBOX_TIMEOUT"]),
+                    api_key=current_app.config["E2B_API_KEY"],
                 )
                 code = '''
 import json as __indatalab_json
@@ -410,7 +417,10 @@ print(__indatalab_json.dumps(__indatalab_items, default=str))
             return
         try:
             Sandbox, _ = cls._sdk()
-            Sandbox.kill(sandbox_id)
+            Sandbox.kill(
+                sandbox_id,
+                api_key=current_app.config.get("E2B_API_KEY"),
+            )
         except Exception:
             logger.exception(
                 "Falha ao encerrar sandbox do notebook %s",
