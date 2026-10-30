@@ -3,7 +3,7 @@ services:
     name: indatalab-api
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --only-binary=:all: -r requirements.txt
     startCommand: gunicorn run:app --workers 1 --threads 4 --timeout 120
     healthCheckPath: /health
     envVars:
