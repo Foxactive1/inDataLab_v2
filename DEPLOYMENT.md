@@ -36,11 +36,27 @@ O script de criação do schema está versionado em [`database/neon_schema.sql`]
 | `JWT_SECRET_KEY` | outro segredo forte e aleatório |
 | `CORS_ORIGINS` | origens Vercel separadas por vírgula |
 | `GROQ_API_KEY` | chave da Groq (opcional se IA não for usada) |
-| `ENABLE_KERNELS` | `false` |
+| `E2B_API_KEY` | chave privada do E2B, cadastrada somente no Render |
+| `E2B_SANDBOX_TIMEOUT` | `3600` (até 1 hora por sessão) |
+| `E2B_EXECUTION_TIMEOUT` | `30` segundos por célula |
+| `E2B_MAX_DATASET_BYTES` | `26214400` (25 MiB por arquivo sincronizado) |
+| `ENABLE_KERNELS` | `false` até concluir a configuração do E2B; depois `true` |
 
 Exemplo de `CORS_ORIGINS`: `https://SEU-PROJETO.vercel.app,https://seudominio.com.br`. Informe somente as origens reais, sem barra no final. Inclua domínio de produção e domínio customizado, se houver.
 
-O arquivo `render.yaml` já descreve o serviço e gera os dois segredos automaticamente. A URL do banco e as origens CORS precisam ser informadas manualmente.
+O arquivo `render.yaml` já descreve o serviço e gera os dois segredos automaticamente. A URL do banco, as origens CORS e a chave E2B precisam ser informadas manualmente.
+
+### Configurar o executor Python isolado (E2B)
+
+1. Crie uma conta no [E2B](https://e2b.dev/) e gere uma API key no dashboard.
+2. Cadastre essa chave no Render como `E2B_API_KEY`. Nunca coloque essa chave no frontend, no GitHub ou em células do notebook.
+3. Antes de habilitar Python, execute no Neon o script incremental [`database/migrations/20261030_add_e2b_sandbox_fields.sql`](database/migrations/20261030_add_e2b_sandbox_fields.sql). Ele adiciona ao notebook os campos usados para persistir a sessão remota.
+4. Confirme que `E2B_SANDBOX_TIMEOUT=3600` e `E2B_EXECUTION_TIMEOUT=30` estão cadastrados.
+5. Somente depois disso, altere `ENABLE_KERNELS` para `true` no Render e faça um novo deploy.
+
+Cada notebook recebe uma sessão E2B persistente e isolada em microVM. O SDK é configurado com `secure=True` e `allow_internet_access=False`; a chave E2B permanece no backend e não é enviada à máquina de execução. As sessões expiram automaticamente após o prazo configurado (padrão de 1 hora); quando expiram, o próximo uso cria outra sessão e as variáveis em memória da sessão anterior não são preservadas.
+
+Os datasets anexados ao notebook são copiados para o sandbox antes da execução, para que o dicionário `_datasets` continue disponível. O tamanho máximo de cada arquivo sincronizado é 25 MiB. O armazenamento local do Render ainda precisa de Persistent Disk ou object storage para que uploads sobrevivam a reinicializações.
 
 Depois do deploy, teste `https://SUA-API.onrender.com/health`. Deve retornar JSON com `status: healthy`.
 
@@ -57,7 +73,7 @@ O frontend usa `index.html` como entrada e `login.html` para autenticação. Nã
 
 ## 4. Limitações conhecidas antes de abrir ao público
 
-- **Execução Python:** está bloqueada por padrão em produção (resposta HTTP 503). O executor atual não é um sandbox de segurança. Não defina `ENABLE_KERNELS=true` em um serviço público até implementar isolamento real por processo/container, limites de CPU/memória/tempo, filesystem restrito e política de rede.
+- **Execução Python:** usa E2B Code Interpreter quando `E2B_API_KEY` está configurada e `ENABLE_KERNELS=true`. Sem a chave, a execução retorna erro de configuração. A rede no sandbox permanece desabilitada por padrão.
 - **Uploads:** o diretório local do Render é efêmero por padrão. Arquivos enviados podem desaparecer em reinicializações ou novos deploys. Para persistência, configure um Persistent Disk pago e defina `UPLOAD_FOLDER=/var/data/uploads`, ou implemente object storage (S3/R2). O banco guarda metadados; não substitui o armazenamento dos arquivos.
 - **Neon:** valide o schema e os relacionamentos antes de usar dados reais. Não execute migrações não revisadas diretamente em produção.
 - **Autenticação:** os endpoints de login/registro ficam em `/auth/login` e `/auth/register`; APIs protegidas ficam em `/api/*` e recebem JWT no header `Authorization: Bearer ...`.
